@@ -1,0 +1,37 @@
+
+
+
+
+
+ground levels:
+integer from 0 to 5, inclusive
+ground leves can differ by max 1 at adjectent fields, inclusing diagonally adjectent fields
+
+sivi density levels:
+float, from 0.0f to 10.0f, inclusive
+
+top level:
+10.0f, stacks for combined terrait and sivi height, so at terrain heigh 3 can sivi height be max 7.0f inclusive 
+
+sivi density accurancy:
+float values, accurancy from 0 to 1 (inclusive, exclusive) has 8 levels of accurancy:
+
+0
+0.125
+0.25
+0.375
+0.5
+0.625
+0.75
+0.875
+
+by following rule:
+sivi density always rounds down when rendered
+
+moreover, for sivi distribution, sivi cannot flow somevere so there would be less than 0.125
+so at least 0.25 sivi is needed to flow to new empty spot, even down by edge.
+when flowing up and enge, at least 1.25f is required to distribute to empty field, so at least
+0.125f appears at new position
+
+also, if for any reason sivi is substracted or destroyed, at the end of one game step, if at any field reamins
+less then 0.125 sivi, this sivi is destroyed (and transformed into mana, if available)

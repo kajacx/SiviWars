@@ -1,0 +1,68 @@
+BUILDINGS DESCRIPTION
+
+total 3 (+1) types of buildings:
+
+I.   Utility
+II.  Defense
+III. Offense
+
+(IV.) Nexus (base headquarters)
+
+
+I. Utility
+Buildings designed to work with Sivi flow
+
+1) Fountain
+Basic Sivi generator building
+Each player starts with one
+
+2) Collector
+Collects Sivi around it and turns it into mana (Sivi) pool
+not at 100% ratio, can be upgreated
+
+3) Depositor
+Deposits Sivi from mana (Sivi) pool
+not at 100% ratio, can be upgreated
+
+
+II. Defense
+Used to protect you from enemy Sivi and units
+
+1) Laser
+Cheap fast short-range weapon witch shoots and any nearby enemy Sivi or units
+prioritizes enemy units
+
+2) Mortar
+Heavy Long-range artillery weapon witch shoots large amounts of Sivi deep into enemy area
+
+3) Air Defense
+Shoots at air units only
+
+
+III. Offense
+Spawns units and sends them to destroy enemy
+
+1) Melee
+Runs towards single point and turns into Sivi on impact with enemy Sivi or when killed.
+
+2) Ranged
+Travels on map and shoots rockets on enemy Sivi and units.
+Rockets need ammo which is replenished by consuming friendly Sivi.
+
+3) Air bombardier
+Only 1 unit per building dispatched at a time, 2 can be preparing for next flight.
+Flying bombardiers go over enemy Base and drop allied Sivi on it.
+
+
+IV. Nexus
+Your headquarters: protect it and destroy enemies.
+You can upgrade lots of things here.
+
+
+
+
+
+
+
+
+
