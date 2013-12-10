@@ -1,20 +1,23 @@
 package com.me.siviwars;
 
+import com.me.siviwars.buildings.Building;
+
 public class GameField {
-	int rows;
-	int cols;
-	float maxValue;
-	float maxTerrainHeight;
+	public int rows;
+	public int cols;
+	public float maxValue;
+	public float maxTerrainHeight;
 
-	float baseMinValue; // min value of sivi that can be on a field
-	float flowSpeed = .2f; // lower then half, how much % will flow over 1 sec
+	public float baseMinValue; // min value of sivi that can be on a field
+	public float flowSpeed = .2f; // lower then half, how much % will flow over
+									// 1 sec
 
-	float[][] siviRed;
-	float[][] siviGreen;
+	public float[][] siviRed;
+	public float[][] siviGreen;
 
-	int[][] terrainHeight;
+	public int[][] terrainHeight;
 
-	GameBuilding[][] buildings;
+	public Building[][] buildings;
 
 	SiviSpreader spreaderRed, spreaderGreen;
 
@@ -22,23 +25,28 @@ public class GameField {
 		new FloatTerrainGenerator().generate();
 	}
 
-	void addSiviSoft(int row, int col, float howMuch, Sivi owner) {
+	public void addSiviSoft(int row, int col, float howMuch, Sivi owner) {
+		/*System.out.println("Adding " + howMuch + " at row " + row + " and col "
+				+ col + " for " + owner);//*/
 		float val = getField(owner)[row][col];
 		val += howMuch;
 		if (val + terrainHeight[row][col] > maxValue) {
 			val = maxValue - terrainHeight[row][col];
-			System.out.println("Overflow");
+			System.out.println("OF " + row + " " + col);
 		}
+		/*if (row == 10 && col == 1) {
+			System.out.println("hotspot set: " + val);
+		}*/
 		getField(owner)[row][col] = val;
 	}
 
-	void addBuilding(GameBuilding b) {
+	public void addBuilding(Building b) {
 		buildings[b.row][b.col] = b;
 	}
 
-	void routineActionBuildings(float time) {
-		for (GameBuilding[] bs : buildings) {
-			for (GameBuilding b : bs) {
+	public void routineActionBuildings(float time) {
+		for (Building[] bs : buildings) {
+			for (Building b : bs) {
 				if (b != null) {
 					b.routineAction(time);
 				}
@@ -46,7 +54,7 @@ public class GameField {
 		}
 	}
 
-	void spreadSivi(final float time) {
+	public void spreadSivi(final float time) {
 		spreaderRed.spreadSivi(time);
 		spreaderGreen.spreadSivi(time);
 
@@ -56,11 +64,11 @@ public class GameField {
 		return sivi[row][col];
 	}*/
 
-	float getSiviTerrainHeight(float[][] sivi, int row, int col) {
+	public float getSiviTerrainHeight(float[][] sivi, int row, int col) {
 		return terrainHeight[row][col] + sivi[row][col];
 	}
 
-	GameField(GameConfig gc) {
+	public GameField(GameConfig gc) {
 		this.rows = gc.rows;
 		this.cols = gc.cols;
 		this.maxValue = gc.maxSiviLevel;
@@ -71,7 +79,7 @@ public class GameField {
 
 		terrainHeight = new int[rows][cols];
 
-		buildings = new GameBuilding[rows][cols];
+		buildings = new Building[rows][cols];
 
 		baseMinValue = gc.renderStep;
 
@@ -95,7 +103,7 @@ public class GameField {
 		}*/
 	}
 
-	float[][] getField(Sivi owner) {
+	public float[][] getField(Sivi owner) {
 		switch (owner) {
 		case RED:
 			return siviRed;
@@ -109,7 +117,7 @@ public class GameField {
 	/**
 	 * kill red and green sivi
 	 */
-	void siviSweep() {
+	public void siviSweep() {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
 				int cmpr = Float.compare(siviRed[i][j], siviGreen[i][j]);
@@ -355,7 +363,12 @@ public class GameField {
 			// TODO: better implementation of spreading
 			float dif;
 			float min = 0.15f;
-			float mult = 0.4f;
+			float mult = 0.4f; // basic
+			float maxMult = 1 / 8f; // maximal val
+
+			mult *= sec;
+			mult = Math.min(mult, maxMult);
+
 			for (int i = 1; i < rows; i++) { // "down"
 				for (int j = 0; j < cols; j++) {
 					dif = getSiviTerrainHeight(curSivi, i - 1, j) // check pairs
@@ -372,7 +385,7 @@ public class GameField {
 							dif = Math.max(dif, -curSivi[i][j]);
 						}
 
-						dif *= mult * sec;
+						dif *= mult;
 						newSivi[i - 1][j] -= dif;
 						newSivi[i][j] += dif;
 					}
@@ -393,7 +406,7 @@ public class GameField {
 						} else { // dif < 0
 							dif = Math.max(dif, -curSivi[i][j]);
 						}
-						dif *= mult * sec;
+						dif *= mult;
 						newSivi[i][j - 1] -= dif;
 						newSivi[i][j] += dif;
 					}

@@ -1,19 +1,23 @@
-package com.me.siviwars;
+package com.me.siviwars.pools;
 
 import com.badlogic.gdx.graphics.Color;
+import com.me.siviwars.GameConfig;
 
 public class ColorPool {
 
 	private GameConfig gc;
 
-	Color[] groundColors;
+	public Color[] groundColors;
 
-	Color[][] redSiviColors;
-	Color[][] greenSiviColors;
+	public Color[][] redSiviColors;
+	public Color[][] greenSiviColors;
 
-	ColorPool(GameConfig gc) {
+	public ColorPool(GameConfig gc) {
 		setGameConfig(gc);
 	}
+
+	public Color baseRed;
+	public Color baseGreen;
 
 	/**
 	 * Game config must be set before calling this
@@ -90,6 +94,8 @@ public class ColorPool {
 		recomputeGroundColors();
 		recomputeRedSiviColors();
 		recomputeGreenSiviColors();
+		baseRed = gc.redSiviColor;
+		baseGreen = gc.greenSiviColor;
 	}
 
 }

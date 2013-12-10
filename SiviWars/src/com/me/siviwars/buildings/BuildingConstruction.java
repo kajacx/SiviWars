@@ -1,19 +1,24 @@
-package com.me.siviwars;
+package com.me.siviwars.buildings;
 
-public class BuildingConstruction extends GameBuilding {
+import com.me.siviwars.pools.TexturePool;
 
-	GameBuilding constructedBuilding;
+public class BuildingConstruction extends Building {
+
+	ConstructedBuilding constructedBuilding;
 
 	float constructionProcess; // from 0 to 1
 
 	float price;
 
-	public BuildingConstruction(GameBuilding constructedBuilding) {
+	public BuildingConstruction(ConstructedBuilding constructedBuilding) {
 		super(constructedBuilding.gf, constructedBuilding.row,
 				constructedBuilding.col, constructedBuilding.owner,
 				constructedBuilding.id);
 		price = constructedBuilding.price;
 		this.constructedBuilding = constructedBuilding;
+
+		texture = TexturePool.getTexturePool().getBuildingTexture(
+				constructedBuilding.id, constructedBuilding.owner, true);
 	}
 
 	private void constructionComplete() {
@@ -22,19 +27,18 @@ public class BuildingConstruction extends GameBuilding {
 	}
 
 	@Override
-	protected void routineAction(float time) {
+	public void routineAction(float time) {
 		float collected = withdrawSivi(time);
 		constructionProcess += collected / price;
-		System.out.format("%.3f, %.3f\n", collected, constructionProcess);
+		// System.out.format("%.3f, %.3f\n", collected, constructionProcess);
 		if (constructionProcess >= 1) {
 			constructionComplete();
 		}
 	}
 
 	@Override
-	protected float getPrice() {
-		// nobody should need this value, maybe re-do the building hierarchy?
-		return -1;
+	public float getHealthbar() {
+		return constructionProcess;
 	}
 
 }

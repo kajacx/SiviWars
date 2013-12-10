@@ -2,12 +2,26 @@ package com.me.siviwars;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.me.siviwars.buildings.Building;
+import com.me.siviwars.buildings.BuildingConstruction;
+import com.me.siviwars.buildings.ConstructedBuilding;
+import com.me.siviwars.buildings.Fountain;
+import com.me.siviwars.pools.ColorPool;
+import com.me.siviwars.pools.TexturePool;
 
 public class SiviWars implements ApplicationListener {
+
+	public static final int RED_SIVI = InputEventHandler.RED_SIVI,
+			GREEN_SIVI = InputEventHandler.GREEN_SIVI,
+			ROW = InputEventHandler.ROW, COL = InputEventHandler.COL,
+			ROW_PAINT = InputEventHandler.ROW_PAINT,
+			COL_PAINT = InputEventHandler.COL_PAINT;
 
 	private GameField gf;
 	private GameConfig gc;
@@ -28,9 +42,19 @@ public class SiviWars implements ApplicationListener {
 
 	private float spaceSmall, spaceSmall2;
 
+	private float menuHeight;
+
+	private Stage stage;
+
+	private Texture pointerRed, pointerGreen;
+
+	private InputEventHandler ieh;
+
 	private int valueToScale(float f) { // for sivi, round down
 		return (int) (f / renderStep);
 	}
+
+	private final float maxDelta = 1f;
 
 	@Override
 	public void create() {
@@ -43,16 +67,27 @@ public class SiviWars implements ApplicationListener {
 		rowsCoef = gc.rowsCoef;
 		colsCoef = gc.colsCoef;
 
-		spaceSmall = (rowsCoef + colsCoef) / 20; // avr and /10
+		spaceSmall = (rowsCoef + colsCoef) / 15; // avr and /7.5
 		spaceSmall2 = spaceSmall * 2;
 
 		renderStep = gc.renderStep;
+
+		menuHeight = gc.menuHeight;
 
 		gf = new GameField(gc);
 
 		cp = new ColorPool(gc);
 
 		batch = new SpriteBatch();
+
+		TexturePool.getTexturePool().initBuildingTextures();
+
+		pointerRed = new Texture(
+				Gdx.files.internal("textures/util/pointer_red.png"));
+		pointerGreen = new Texture(
+				Gdx.files.internal("textures/util/pointer_green.png"));
+
+		ieh = new InputEventHandler(gc);
 
 		groundTextures = new Texture[rows][cols];
 		String format = "textures/ground_textures/" + groundTextureName + "%0"
@@ -65,60 +100,33 @@ public class SiviWars implements ApplicationListener {
 			}
 		}
 
-		/*for (int i = 0; i < 3; i++) {
-			gf.addBuilding(new Fountain(gf, (int) (Math.random() * rows),
-					(int) (Math.random() * cols), Sivi.RED, 1));
-			gf.addBuilding(new Fountain(gf, (int) (Math.random() * rows),
-					(int) (Math.random() * cols), Sivi.GREEN, 1));
-		}//*/
-
-		GameBuilding redFountain = new Fountain(gf, rows / 2, 1, Sivi.RED, 1);
+		Building redFountain = new Fountain(gf, rows / 2, 1, Sivi.RED, 1);
 
 		gf.addBuilding(redFountain);
 
-		GameBuilding greenFountain = new Fountain(gf, rows / 2, cols - 2,
+		Building greenFountain = new Fountain(gf, rows / 2, cols - 2,
 				Sivi.GREEN, 1);
 
 		gf.addBuilding(greenFountain);
 
 		redFountain = new Fountain(gf, rows / 2, 5, Sivi.RED, 1);
-		redFountain = new BuildingConstruction(redFountain);
+		redFountain = new BuildingConstruction(
+				(ConstructedBuilding) redFountain);
 		gf.addBuilding(redFountain);
 
-		/*Sound sound = Gdx.audio.newSound(Gdx.files.internal("data/got.mp3"));
-		long id = sound.play(0.5f);
+		InputMultiplexer im = new InputMultiplexer();
 
-		sound.setLooping(id, true); // keeps the sound looping
+		stage = new Stage();
 
-		/*long id = sound.play(1.0f); // play new sound and keep handle for further manipulation
-		sound.stop(id);             // stops the sound instance immediately
-		sound.setPitch(id, 2);      // increases the pitch to 2x the original pitch
+		im.addProcessor(stage);
+		im.addProcessor(ieh);
 
-		id = sound.play(1.0f);      // plays the sound a second time, this is treated as a different instance
-		sound.setPan(id, -1, 1);    // sets the pan of the sound to the left side at full volume
-		sound.setLooping(id, true); // keeps the sound looping
-		sound.stop(id);             // stops the looping sound */
-
-		/*Music music = Gdx.audio.newMusic(Gdx.files.internal("data/got.mp3"));
-
-		music.setVolume(0.5f); // sets the volume to half the maximum volume
-		music.setLooping(true); // will repeat playback until music.stop() is
-								// called
-		music.play(); // resumes the playback
-
-		/*music.setVolume(0.5f);                 // sets the volume to half the maximum volume
-		music.setLooping(true);                // will repeat playback until music.stop() is called
-		music.stop();                          // stops the playback
-		music.pause();                         // pauses the playback
-		music.play();                          // resumes the playback
-		boolean isPlaying = music.isPlaying(); // obvious :)
-		boolean isLooping = music.isLooping(); // obvious as well :)
-		float position = music.getPosition();  // returns the playback position in seconds*/
+		Gdx.input.setInputProcessor(im);
 	}
 
 	@Override
 	public void dispose() {
-
+		stage.dispose();
 	}
 
 	@Override
@@ -126,7 +134,7 @@ public class SiviWars implements ApplicationListener {
 		Gdx.gl.glClearColor(1, 1, 1, 1);
 		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 
-		final float delta = Gdx.graphics.getDeltaTime();
+		final float delta = Math.min(Gdx.graphics.getDeltaTime(), maxDelta);
 
 		gf.routineActionBuildings(delta);
 		gf.spreadSivi(delta);
@@ -137,36 +145,68 @@ public class SiviWars implements ApplicationListener {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
 				int h = gf.terrainHeight[i][j];
+				/*if (i == 10 && j == 1) {
+					System.out.println("Hotspot get: " + gf.siviRed[i][j]);
+				}*/
 				if (gf.siviRed[i][j] != 0) {
+					// try {
 					c = cp.redSiviColors[h][valueToScale(gf.siviRed[i][j])];
+					/*} catch (ArrayIndexOutOfBoundsException ex) {
+						System.out.format("i: %d, j: %d, h: %d, sr: %f\n", i,
+								j, h, gf.siviRed[i][j]);
+						c = Color.BLUE; // nope
+					}*/
 				} else if (gf.siviGreen[i][j] != 0) {
 					c = cp.greenSiviColors[h][valueToScale(gf.siviGreen[i][j])];
+					// c = Color.GREEN; // nope
 				} else {
 					c = cp.groundColors[h];
 				}
 				batch.setColor(c);
-				batch.draw(groundTextures[i][j], j * colsCoef, i * rowsCoef,
-						colsCoef, rowsCoef);
+				batch.draw(groundTextures[i][j], j * colsCoef + menuHeight, i
+						* rowsCoef, colsCoef, rowsCoef);
 				if (gf.buildings[i][j] != null) {
 					batch.setColor(Color.WHITE);
-					batch.draw(gf.buildings[i][j].texture, j * colsCoef, i
-							* rowsCoef, colsCoef, rowsCoef);
+					batch.draw(gf.buildings[i][j].texture, j * colsCoef
+							+ spaceSmall + menuHeight, i * rowsCoef
+							+ spaceSmall, colsCoef - spaceSmall2, rowsCoef
+							- spaceSmall2);
 				}
 			}
 		}
+
+		// System.out.println("")
+
+		// pointers
+		batch.setColor(cp.baseRed);
+		batch.draw(pointerRed, ieh.cursors[RED_SIVI][COL_PAINT],
+				ieh.cursors[RED_SIVI][ROW_PAINT], ieh.cursorSize,
+				ieh.cursorSize);
+
+		batch.setColor(cp.baseGreen);
+		batch.draw(pointerGreen, ieh.cursors[GREEN_SIVI][COL_PAINT],
+				ieh.cursors[GREEN_SIVI][ROW_PAINT], ieh.cursorSize,
+				ieh.cursorSize);
+
 		batch.end();
+
+		stage.act(delta);
+		stage.draw();
 
 	}
 
 	@Override
 	public void resize(int width, int height) {
+		stage.setViewport(width, height, true);
 	}
 
 	@Override
 	public void pause() {
+		System.out.println("pause");
 	}
 
 	@Override
 	public void resume() {
+		System.out.println("resume");
 	}
 }

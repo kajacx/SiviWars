@@ -8,8 +8,9 @@ public class Main {
 		LwjglApplicationConfiguration cfg = new LwjglApplicationConfiguration();
 		cfg.title = "SiviWars";
 		cfg.useGL20 = true;
-		cfg.width = 480;
-		cfg.height = 320;
+		cfg.width = 720;
+		cfg.height = 480;
+		// cfg.addIcon("data/icon0.jpg", FileType.Internal);
 
 		new LwjglApplication(new SiviWars(), cfg);
 	}
