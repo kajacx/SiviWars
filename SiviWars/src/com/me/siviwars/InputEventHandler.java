@@ -1,36 +1,74 @@
 package com.me.siviwars;
 
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.me.siviwars.pools.ColorPool;
 
 public class InputEventHandler implements InputProcessor {
 
+	private static final float epsilon = .001f; // hack for rounding down
+
 	public static final int RED_SIVI = 0, GREEN_SIVI = 1, ROW = 0, COL = 1,
-			ROW_PAINT = 2, COL_PAINT = 3;
+			ROW_PAINT = 2, COL_PAINT = 3, X = 0, Y = 1; // various array
+														// indexing
 
 	public float[][] cursors = new float[2][4];
 
+	private final float[][] movepadVectors = new float[2][2];
+
 	public float cursorSize = 32;
 	public float cursorSizeH = cursorSize / 2;
+	public float movepadSpeed = 150; // per second
 
 	private final GameConfig gc;
 
-	InputEventHandler(GameConfig gc) {
+	private final GameField gf;
+
+	public void routineAction(float sec) {
+		/*System.out.format("red: x: %.2f y: %.2f\n",
+				movepadVectors[RED_SIVI][X], movepadVectors[RED_SIVI][Y]);*/
+		for (int owner = 0; owner < 2; owner++) {
+			float row = cursors[owner][ROW] + movepadSpeed * sec
+					* movepadVectors[owner][Y];
+			float col = cursors[owner][COL] + movepadSpeed * sec
+					* movepadVectors[owner][X];
+			setCursorHotspot(owner, row, col);
+		}
+	}
+
+	InputEventHandler(GameConfig gc, GameField gf) {
 		this.gc = gc;
+		this.gf = gf;
 		setCursorHotspot(RED_SIVI, 50, 50);
 		setCursorHotspot(GREEN_SIVI, 50, 50);
 	}
 
 	/**
-	 * measured from top
+	 * measured from top, range checked
 	 * 
 	 * @param cursor
 	 * @param row
 	 * @param col
 	 */
 	void setCursorHotspot(int cursorOwner, float row, float col) {
+		if (row < 0) {
+			row = 0;
+		} else if (row >= gc.fieldHeight) {
+			row = gc.fieldHeight - epsilon;
+		}
+		if (col < gc.menuHeight) {
+			col = gc.menuHeight;
+		} else if (col >= gc.menuHeight + gc.fieldWidth) {
+			col = gc.menuHeight + gc.fieldWidth - epsilon;
+		}
 		cursors[cursorOwner][ROW] = row;
 		cursors[cursorOwner][COL] = col;
-		cursors[cursorOwner][ROW_PAINT] = gc.fieldHeight - row - cursorSizeH;
+		cursors[cursorOwner][ROW_PAINT] = row - cursorSizeH;
 		cursors[cursorOwner][COL_PAINT] = col - cursorSizeH;
 	}
 
@@ -72,8 +110,11 @@ public class InputEventHandler implements InputProcessor {
 
 	@Override
 	public boolean mouseMoved(int screenX, int screenY) {
-		setCursorHotspot(RED_SIVI, screenY, screenX);
-		setCursorHotspot(GREEN_SIVI, screenY, screenX);
+		if (screenX >= gc.menuHeight
+				&& screenX <= gc.fieldWidth + gc.menuHeight) {
+			setCursorHotspot(RED_SIVI, gc.screenHeight - screenY, screenX);
+			setCursorHotspot(GREEN_SIVI, gc.screenHeight - screenY, screenX);
+		}
 		return true;
 	}
 
@@ -81,6 +122,130 @@ public class InputEventHandler implements InputProcessor {
 	public boolean scrolled(int amount) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	public class ElevationMeter extends Actor {
+
+		private final Sivi owner;
+		private final ColorPool cp = ColorPool.getColorPool();
+		float width;
+		float height;
+
+		private final ShapeRenderer renderer = new ShapeRenderer();
+
+		public ElevationMeter(Sivi owner) {
+			this.owner = owner;
+		}
+
+		@Override
+		public void setSize(float width, float height) {
+			super.setSize(width, height);
+			this.width = width;
+			this.height = height;
+			// System.out.format("w: %.2f, h: %.2f\n", width, height);
+		}
+
+		@Override
+		public void draw(SpriteBatch batch, float parentAlpha) {
+
+			if (owner == Sivi.GREEN) {
+				renderer.begin(ShapeType.Filled);
+				renderer.setColor(0, 1, 1, 1);
+				renderer.rect(20, 20, 20, 20);
+				renderer.end();
+			}
+
+			/*/
+
+			float row = cursors[owner.ordinal][ROW];
+			float col = cursors[owner.ordinal][COL];
+			int rowi = (int) (row / gc.rowsCoef);
+			int coli = (int) ((col - gc.menuHeight) / gc.colsCoef);
+
+			float step = width / gc.maxSiviLevel;
+			// step *= 2;
+			// System.out.format("s: %.2f\n", step);
+
+			int terh = gf.terrainHeight[rowi][coli];
+
+			renderer.begin(ShapeType.Filled);
+
+			// batch.draw(region, x + imageX, y + imageY, getOriginX() - imageX,
+			// getOriginY() - imageY, imageWidth, imageHeight, scaleX,
+			// scaleY, rotation);
+
+			for (int i = 0; i <= terh; i++) {
+				Color c = cp.groundColors[i];
+				renderer.setColor(c);
+				// renderer.rect(i * step, 0, step, height);
+				// renderer.rect(x, y, i, i, originX, originY, rotation);
+				renderer.rect(i * step, 0, step, height);
+			}
+
+			renderer.end();// */
+		}
+	}
+
+	public class MovepadInputListener extends InputListener {
+		private final Sivi owner;
+
+		private final float size, sizeHalf;
+
+		public MovepadInputListener(Sivi owner) {
+			this.owner = owner;
+			size = gc.menuHeight;
+			sizeHalf = size / 2;
+		}
+
+		@Override
+		public boolean touchDown(InputEvent event, float x, float y,
+				int pointer, int button) {
+			// System.out.format("down x: %.2f y: %.2f\n", x, y);
+			setUnrecomputedVector(x, y);
+			return true;
+		}
+
+		@Override
+		public void touchDragged(InputEvent event, float x, float y, int pointer) {
+			// System.out.format("dragged x: %.2f y: %.2f\n", x, y);
+			setUnrecomputedVector(x, y);
+		}
+
+		@Override
+		public void touchUp(InputEvent event, float x, float y, int pointer,
+				int button) {
+			// System.out.format("touchup x: %.2f y: %.2f\n", x, y);
+			setRecomputedVec(0, 0);
+		}
+
+		/**
+		 * range checked
+		 * 
+		 * @param x
+		 * @param y
+		 */
+		private void setUnrecomputedVector(float x, float y) {
+			x = Math.max(x, 0);
+			x = Math.min(x, size);
+			y = Math.max(y, 0);
+			y = Math.min(y, size);
+
+			x = x / sizeHalf - 1; // from 0_size to -1_1
+			y = y / sizeHalf - 1; // y = y/size; y = y*2 - 1;
+
+			setRecomputedVec(x, y);
+		}
+
+		/**
+		 * from -1 to 1
+		 * 
+		 * @param x
+		 * @param y
+		 */
+		private void setRecomputedVec(float x, float y) {
+			movepadVectors[owner.ordinal][X] = x;
+			movepadVectors[owner.ordinal][Y] = y;
+		}
 	}
 
 }

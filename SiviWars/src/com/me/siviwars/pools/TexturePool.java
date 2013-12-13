@@ -1,10 +1,13 @@
 package com.me.siviwars.pools;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.TextureData;
-import com.badlogic.gdx.graphics.glutils.PixmapTextureData;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector3;
 import com.me.siviwars.Sivi;
 
 /**
@@ -32,37 +35,45 @@ public class TexturePool {
 
 	private int baseBuildingsCount;
 
+	public Texture movepad;
+
 	/**
 	 * 0) builded red 1) builded green 2) building red 3) building green
 	 */
 	private Texture[] buildingTextures;
 
-	private Texture rotate90(Texture t, boolean cw) {
-		int width = t.getWidth();
-		int height = t.getHeight();
+	private Texture rotate90(Texture orig, boolean cw) {
+		int width = orig.getWidth();
+		int height = orig.getHeight();
+		// System.out.format("w: %d, h: %d\n", width, height);
 
-		Pixmap pm = new Pixmap(height, width, Pixmap.Format.RGB888);
+		FrameBuffer fb = new FrameBuffer(Format.RGBA8888, width, height, false);
 
-		TextureData td = t.getTextureData();
-		if (!(td instanceof PixmapTextureData)) {
-			td.prepare();
-		}
-		Pixmap orig = td.consumePixmap();
+		SpriteBatch batch = new SpriteBatch();
+		Matrix4 matrix = new Matrix4();
+		matrix.setToOrtho2D(0, 0, width, height);
+		batch.setProjectionMatrix(matrix);
 
-		for (int i = 0; i < height; i++) {
-			for (int j = 0; j < width; j++) {
-				if (cw) {
-					pm.setColor(orig.getPixel(j, height - i));
-				} else {
-					pm.setColor(orig.getPixel(width - j, i));
-				}
-				pm.drawPixel(i, j);
-			}
-		}
+		/*Matrix4 m4 = new Matrix4();
+		m4.val[Matrix4.M11] = -1;
+		batch.setTransformMatrix(m4);// */
+		batch.setTransformMatrix(new Matrix4().setToRotation(new Vector3(0, 0,
+				1), 90));
+		fb.begin();
 
-		Texture out = new Texture(pm);
-		pm.dispose();
-		return out;
+		batch.begin();
+
+		TextureRegion tr = new TextureRegion(orig);
+
+		tr.flip(!cw, cw);
+
+		batch.draw(tr, 0, -height);
+
+		batch.end();
+
+		fb.end();
+
+		return fb.getColorBufferTexture();
 	}
 
 	private Texture rotateBuildingByOwner(Texture t, Sivi owner) {
@@ -86,23 +97,47 @@ public class TexturePool {
 	 * @return original texture with now drawn new texterue on it
 	 */
 	private Texture combineTextures(Texture orig, Texture newT) {
-		TextureData td = newT.getTextureData();
-		td.prepare();
-		Pixmap pm = td.consumePixmap();
+		int width = orig.getWidth();
+		int height = orig.getHeight();
+		// System.out.format("w: %d, h: %d\n", width, height);
 
-		td = orig.getTextureData();
-		td.prepare();
-		Pixmap pm2 = td.consumePixmap();
+		FrameBuffer fb = new FrameBuffer(Format.RGBA8888, width, height, false);
 
-		Texture ret = new Texture(pm2);
+		SpriteBatch batch = new SpriteBatch();
+		Matrix4 matrix = new Matrix4();
+		matrix.setToOrtho2D(0, 0, width, height);
+		batch.setProjectionMatrix(matrix);
 
-		ret.draw(pm, 0, 0);
-		pm.dispose();
-		pm2.dispose();
-		return ret;
+		Matrix4 m4 = new Matrix4();
+		m4.val[Matrix4.M11] = -1;
+		batch.setTransformMatrix(m4);// */
+		fb.begin();
+
+		batch.begin();
+
+		// batch.draw(orig, -256, 0);
+		// batch.draw(orig, 0, 0);
+		batch.setColor(1, 1, 1, 1f);
+
+		batch.draw(orig, 0, -height);
+
+		batch.setColor(1, 1, 1, .8f);
+
+		batch.draw(newT, 0, -height, width, height);
+
+		batch.end();
+
+		fb.end();
+
+		return fb.getColorBufferTexture();
 	}
 
-	public void initBuildingTextures() {
+	public void init() {
+		movepad = new Texture(Gdx.files.internal("textures/util/movepad.png"));
+		initBuildingTextures();
+	}
+
+	private void initBuildingTextures() {
 		baseBuildingsCount = buildingTextureNames.length;
 		buildingTextures = new Texture[4 * baseBuildingsCount];
 

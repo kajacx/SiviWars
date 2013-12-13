@@ -56,7 +56,7 @@ public class GameConfig {
 		screenHeight = Gdx.graphics.getHeight();
 		screenWidth = Gdx.graphics.getWidth();
 
-		menuHeight = screenWidth / 10;
+		menuHeight = screenWidth / 8; // lets try this
 
 		fieldHeight = screenHeight;
 		fieldWidth = screenWidth - 2 * menuHeight;

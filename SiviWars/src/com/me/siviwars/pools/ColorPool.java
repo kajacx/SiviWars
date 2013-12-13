@@ -3,7 +3,26 @@ package com.me.siviwars.pools;
 import com.badlogic.gdx.graphics.Color;
 import com.me.siviwars.GameConfig;
 
+/**
+ * singleton
+ * 
+ * @author kajacx
+ * 
+ */
 public class ColorPool {
+
+	private static ColorPool instance;
+
+	public static ColorPool getColorPool() {
+		if (instance == null) {
+			synchronized (ColorPool.class) {
+				if (instance == null) {
+					instance = new ColorPool();
+				}
+			}
+		}
+		return instance;
+	}
 
 	private GameConfig gc;
 
@@ -12,8 +31,8 @@ public class ColorPool {
 	public Color[][] redSiviColors;
 	public Color[][] greenSiviColors;
 
-	public ColorPool(GameConfig gc) {
-		setGameConfig(gc);
+	private ColorPool() {
+
 	}
 
 	public Color baseRed;
@@ -89,7 +108,7 @@ public class ColorPool {
 		}
 	}
 
-	void setGameConfig(GameConfig gc) {
+	public void setGameConfig(GameConfig gc) {
 		this.gc = gc;
 		recomputeGroundColors();
 		recomputeRedSiviColors();

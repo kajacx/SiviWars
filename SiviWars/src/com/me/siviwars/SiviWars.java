@@ -7,12 +7,15 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.me.siviwars.buildings.Building;
 import com.me.siviwars.buildings.BuildingConstruction;
 import com.me.siviwars.buildings.ConstructedBuilding;
 import com.me.siviwars.buildings.Fountain;
 import com.me.siviwars.pools.ColorPool;
+import com.me.siviwars.pools.MenuPool;
 import com.me.siviwars.pools.TexturePool;
 
 public class SiviWars implements ApplicationListener {
@@ -50,6 +53,10 @@ public class SiviWars implements ApplicationListener {
 
 	private InputEventHandler ieh;
 
+	private MenuPool redMenuPool, greenMenuPool;
+
+	private TexturePool tp;
+
 	private int valueToScale(float f) { // for sivi, round down
 		return (int) (f / renderStep);
 	}
@@ -76,18 +83,20 @@ public class SiviWars implements ApplicationListener {
 
 		gf = new GameField(gc);
 
-		cp = new ColorPool(gc);
+		cp = ColorPool.getColorPool();
+		cp.setGameConfig(gc);
 
 		batch = new SpriteBatch();
 
-		TexturePool.getTexturePool().initBuildingTextures();
+		tp = TexturePool.getTexturePool();
+		tp.init();
 
 		pointerRed = new Texture(
 				Gdx.files.internal("textures/util/pointer_red.png"));
 		pointerGreen = new Texture(
 				Gdx.files.internal("textures/util/pointer_green.png"));
 
-		ieh = new InputEventHandler(gc);
+		ieh = new InputEventHandler(gc, gf);
 
 		groundTextures = new Texture[rows][cols];
 		String format = "textures/ground_textures/" + groundTextureName + "%0"
@@ -118,6 +127,26 @@ public class SiviWars implements ApplicationListener {
 
 		stage = new Stage();
 
+		// redMenuPool = new MenuPool(Sivi.RED, ieh, gc);
+		// greenMenuPool = new MenuPool(Sivi.GREEN, ieh, gc);
+
+		// stage.addActor(redMenuPool.createRootTable());
+		// stage.addActor(greenMenuPool.createRootTable());// */
+
+		/*Image i = new Image(tp.movepad);
+		i.setColor(1, 0, 0, .5f);
+
+		stage.addActor(i);*/
+
+		Actor redMp = createMovePad(Sivi.RED);
+		stage.addActor(redMp);
+
+		Actor greenMp = createMovePad(Sivi.GREEN);
+		greenMp.setPosition(gc.screenWidth - gc.menuHeight, gc.screenHeight
+				- gc.menuHeight);
+		// greenMp.set
+		stage.addActor(greenMp);
+
 		im.addProcessor(stage);
 		im.addProcessor(ieh);
 
@@ -139,6 +168,8 @@ public class SiviWars implements ApplicationListener {
 		gf.routineActionBuildings(delta);
 		gf.spreadSivi(delta);
 		gf.siviSweep();
+
+		ieh.routineAction(delta);
 
 		Color c;
 		batch.begin();
@@ -165,14 +196,16 @@ public class SiviWars implements ApplicationListener {
 				batch.setColor(c);
 				batch.draw(groundTextures[i][j], j * colsCoef + menuHeight, i
 						* rowsCoef, colsCoef, rowsCoef);
-				if (gf.buildings[i][j] != null) {
-					batch.setColor(Color.WHITE);
-					batch.draw(gf.buildings[i][j].texture, j * colsCoef
-							+ spaceSmall + menuHeight, i * rowsCoef
-							+ spaceSmall, colsCoef - spaceSmall2, rowsCoef
-							- spaceSmall2);
-				}
 			}
+		}
+
+		batch.setColor(Color.WHITE);
+
+		for (Building b : gf.buildings) {
+
+			batch.draw(b.texture, b.col * colsCoef + spaceSmall + menuHeight,
+					b.row * rowsCoef + spaceSmall, colsCoef - spaceSmall2,
+					rowsCoef - spaceSmall2);
 		}
 
 		// System.out.println("")
@@ -208,5 +241,14 @@ public class SiviWars implements ApplicationListener {
 	@Override
 	public void resume() {
 		System.out.println("resume");
+	}
+
+	private Actor createMovePad(Sivi owner) {
+		Image i = new Image(tp.movepad);
+		i.setColor(owner == Sivi.RED ? gc.redSiviColor : gc.greenSiviColor);
+		i.setHeight(gc.menuHeight);
+		i.setWidth(gc.menuHeight);
+		i.addListener(ieh.new MovepadInputListener(owner));
+		return i;
 	}
 }

@@ -28,7 +28,7 @@ public abstract class Building implements Healthbar, RoutineAction {
 
 	/**
 	 * Takes halfs of allied Sivi this building stands on per second. Need to
-	 * call addSiviSoft() if all Sivi isnt consumed
+	 * call depositSivi() if all Sivi isnt consumed
 	 * 
 	 * @param time
 	 *            Seconds elapsed from last collection
@@ -36,10 +36,26 @@ public abstract class Building implements Healthbar, RoutineAction {
 	 * @return Amount of sivi collected / withdraw
 	 */
 	public float withdrawSivi(float time) {
-		float howMuch = gf.getField(owner)[row][col] / 2;
-		howMuch *= time;
+		/*float howMuch = gf.getField(owner)[row][col] / 2;
+		howMuch *= time;*/
+		float howMuch = time / 2;
+		howMuch = Math.min(howMuch, .75f); // to not withdraw too much
+		howMuch *= gf.getField(owner)[row][col];
 		gf.getField(owner)[row][col] -= howMuch;
 		return howMuch;
+	}
+
+	/**
+	 * puts sivi on the field where buildings stands
+	 * 
+	 * @param amount
+	 *            how much sivi to put
+	 * @return how much sivi wasn't added due to overflow
+	 */
+	public float depositSivi(float amount) {
+		float before = gf.getField(owner)[row][col];
+		gf.addSiviSoft(row, col, amount, owner);
+		return before - gf.getField(owner)[row][col] + amount;
 	}
 
 	public static Building createBuilding(int id, GameField gf, int row,

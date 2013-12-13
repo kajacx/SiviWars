@@ -1,5 +1,7 @@
 package com.me.siviwars;
 
+import java.util.ArrayList;
+
 import com.me.siviwars.buildings.Building;
 
 public class GameField {
@@ -17,7 +19,8 @@ public class GameField {
 
 	public int[][] terrainHeight;
 
-	public Building[][] buildings;
+	// public Building[][] buildings;
+	public ArrayList<Building> buildings = new ArrayList<Building>();
 
 	SiviSpreader spreaderRed, spreaderGreen;
 
@@ -40,18 +43,33 @@ public class GameField {
 		getField(owner)[row][col] = val;
 	}
 
+	/**
+	 * this will remove the old building
+	 * 
+	 * @param b
+	 */
 	public void addBuilding(Building b) {
-		buildings[b.row][b.col] = b;
+		Building toRemove = null;
+		for (Building b0 : buildings) {
+			if (b0.row == b.row && b0.col == b.col) {
+				toRemove = b0;
+				break;
+			}
+		}
+		if (toRemove != null) {
+			buildings.remove(toRemove);
+		}
+		buildings.add(b);
 	}
 
 	public void routineActionBuildings(float time) {
-		for (Building[] bs : buildings) {
-			for (Building b : bs) {
-				if (b != null) {
-					b.routineAction(time);
-				}
+		// for (Building[] bs : ) {
+		for (Building b : buildings) {
+			if (b != null) {
+				b.routineAction(time);
 			}
 		}
+		// }
 	}
 
 	public void spreadSivi(final float time) {
@@ -79,7 +97,7 @@ public class GameField {
 
 		terrainHeight = new int[rows][cols];
 
-		buildings = new Building[rows][cols];
+		buildings = new ArrayList<Building>();
 
 		baseMinValue = gc.renderStep;
 
