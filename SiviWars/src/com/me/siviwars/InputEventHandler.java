@@ -1,15 +1,18 @@
 package com.me.siviwars;
 
+import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
-import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
-import com.me.siviwars.pools.ColorPool;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.me.siviwars.buildings.Building;
+import com.me.siviwars.buildings.BuildingConstruction;
+import com.me.siviwars.buildings.ConstructedBuilding;
 
 public class InputEventHandler implements InputProcessor {
+
+	public static final boolean debug = true;
 
 	private static final float epsilon = .001f; // hack for rounding down
 
@@ -25,9 +28,9 @@ public class InputEventHandler implements InputProcessor {
 	public float cursorSizeH = cursorSize / 2;
 	public float movepadSpeed = 150; // per second
 
-	private final GameConfig gc;
+	public final GameConfig gc;
 
-	private final GameField gf;
+	public final GameField gf;
 
 	public void routineAction(float sec) {
 		/*System.out.format("red: x: %.2f y: %.2f\n",
@@ -46,6 +49,19 @@ public class InputEventHandler implements InputProcessor {
 		this.gf = gf;
 		setCursorHotspot(RED_SIVI, 50, 50);
 		setCursorHotspot(GREEN_SIVI, 50, 50);
+	}
+
+	public void buildBuilding(int buildingID, Sivi owner, int row, int col) {
+		if (gf.getField(owner)[row][col] <= 0) { // cannot build here
+			return;
+		}
+		if (gf.getBuilding(row, col) != null) { // cannot build there
+			return;
+		}
+		ConstructedBuilding cb = (ConstructedBuilding) Building.createBuilding(
+				buildingID, gf, row, col, owner);
+		BuildingConstruction bc = new BuildingConstruction(cb);
+		gf.addBuilding(bc);
 	}
 
 	/**
@@ -92,7 +108,21 @@ public class InputEventHandler implements InputProcessor {
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		// TODO Auto-generated method stub
+		if (debug) {
+			if (screenX >= gc.menuHeight
+					&& screenX <= gc.fieldWidth + gc.menuHeight) {
+				switch (button) {
+				case Buttons.LEFT:
+					setCursorHotspot(RED_SIVI, gc.screenHeight - screenY,
+							screenX);
+					break;
+				case Buttons.RIGHT:
+					setCursorHotspot(GREEN_SIVI, gc.screenHeight - screenY,
+							screenX);
+					break;
+				}
+			}
+		}
 		return false;
 	}
 
@@ -110,12 +140,13 @@ public class InputEventHandler implements InputProcessor {
 
 	@Override
 	public boolean mouseMoved(int screenX, int screenY) {
-		if (screenX >= gc.menuHeight
+		/*if (screenX >= gc.menuHeight
 				&& screenX <= gc.fieldWidth + gc.menuHeight) {
 			setCursorHotspot(RED_SIVI, gc.screenHeight - screenY, screenX);
 			setCursorHotspot(GREEN_SIVI, gc.screenHeight - screenY, screenX);
-		}
-		return true;
+		}*/
+		// return true;
+		return false;
 	}
 
 	@Override
@@ -124,65 +155,43 @@ public class InputEventHandler implements InputProcessor {
 		return false;
 	}
 
-	public class ElevationMeter extends Actor {
+	/**
+	 * in order row, col
+	 * 
+	 * @param row
+	 * @param col
+	 * @return
+	 */
+	public Vector2 getCenterOfField(int row, int col) {
+		float x = (row + .5f) * gc.rowsCoef;
+		float y = (col + .5f) * gc.colsCoef + gc.menuHeight;
+		return new Vector2(x, y);
+	}
 
-		private final Sivi owner;
-		private final ColorPool cp = ColorPool.getColorPool();
-		float width;
-		float height;
+	public int[] getRowAndColOfCursor(int cursorOwner) {
+		float row = cursors[cursorOwner][ROW];
+		float col = cursors[cursorOwner][COL];
+		int rowi = (int) (row / gc.rowsCoef);
+		int coli = (int) ((col - gc.menuHeight) / gc.colsCoef);
+		return new int[] { rowi, coli };
+	}
 
-		private final ShapeRenderer renderer = new ShapeRenderer();
+	public class ConstructBuildingListener extends ClickListener {
+		private final Sivi ownerS;
+		private final int ownerI;
+		private final int buildingID;
 
-		public ElevationMeter(Sivi owner) {
-			this.owner = owner;
+		public ConstructBuildingListener(Sivi owner, int buildingID) {
+			this.buildingID = buildingID;
+			ownerS = owner;
+			ownerI = owner.ordinal;
 		}
 
 		@Override
-		public void setSize(float width, float height) {
-			super.setSize(width, height);
-			this.width = width;
-			this.height = height;
-			// System.out.format("w: %.2f, h: %.2f\n", width, height);
-		}
-
-		@Override
-		public void draw(SpriteBatch batch, float parentAlpha) {
-
-			if (owner == Sivi.GREEN) {
-				renderer.begin(ShapeType.Filled);
-				renderer.setColor(0, 1, 1, 1);
-				renderer.rect(20, 20, 20, 20);
-				renderer.end();
-			}
-
-			/*/
-
-			float row = cursors[owner.ordinal][ROW];
-			float col = cursors[owner.ordinal][COL];
-			int rowi = (int) (row / gc.rowsCoef);
-			int coli = (int) ((col - gc.menuHeight) / gc.colsCoef);
-
-			float step = width / gc.maxSiviLevel;
-			// step *= 2;
-			// System.out.format("s: %.2f\n", step);
-
-			int terh = gf.terrainHeight[rowi][coli];
-
-			renderer.begin(ShapeType.Filled);
-
-			// batch.draw(region, x + imageX, y + imageY, getOriginX() - imageX,
-			// getOriginY() - imageY, imageWidth, imageHeight, scaleX,
-			// scaleY, rotation);
-
-			for (int i = 0; i <= terh; i++) {
-				Color c = cp.groundColors[i];
-				renderer.setColor(c);
-				// renderer.rect(i * step, 0, step, height);
-				// renderer.rect(x, y, i, i, originX, originY, rotation);
-				renderer.rect(i * step, 0, step, height);
-			}
-
-			renderer.end();// */
+		public void clicked(InputEvent event, float x, float y) {
+			super.clicked(event, x, y);
+			int[] pos = getRowAndColOfCursor(ownerI);
+			buildBuilding(buildingID, ownerS, pos[0], pos[1]);
 		}
 	}
 
@@ -245,6 +254,20 @@ public class InputEventHandler implements InputProcessor {
 		private void setRecomputedVec(float x, float y) {
 			movepadVectors[owner.ordinal][X] = x;
 			movepadVectors[owner.ordinal][Y] = y;
+		}
+	}
+
+	public class PauseListener extends ClickListener {
+		private final Sivi owner;
+
+		public PauseListener(Sivi owner) {
+			this.owner = owner;
+		}
+
+		@Override
+		public void clicked(InputEvent e, float x, float y) {
+			super.clicked(e, x, y);
+			System.out.println(owner + " has paused the game");
 		}
 	}
 

@@ -44,30 +44,39 @@ public class GameField {
 	}
 
 	/**
+	 * returns null if there is no building
+	 * 
+	 * @param row
+	 * @param col
+	 * @return
+	 */
+	public Building getBuilding(int row, int col) {
+		for (Building b : buildings) {
+			if (b.row == row && b.col == col) {
+				return b;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * this will remove the old building
 	 * 
 	 * @param b
 	 */
 	public void addBuilding(Building b) {
-		Building toRemove = null;
-		for (Building b0 : buildings) {
-			if (b0.row == b.row && b0.col == b.col) {
-				toRemove = b0;
-				break;
-			}
-		}
+		Building toRemove = getBuilding(b.row, b.col);
 		if (toRemove != null) {
 			buildings.remove(toRemove);
 		}
 		buildings.add(b);
 	}
 
-	public void routineActionBuildings(float time) {
+	@SuppressWarnings("unchecked")
+	public void routineActionBuildings(final float time) {
 		// for (Building[] bs : ) {
-		for (Building b : buildings) {
-			if (b != null) {
-				b.routineAction(time);
-			}
+		for (Building b : (ArrayList<Building>) buildings.clone()) {
+			b.routineAction(time);
 		}
 		// }
 	}
@@ -103,8 +112,10 @@ public class GameField {
 
 		genRandTerrain();
 
-		spreaderRed = new SiviSpreader(Sivi.RED);
-		spreaderGreen = new SiviSpreader(Sivi.GREEN);
+		spreaderRed = new UnbufferedSiviSpreader();
+		spreaderRed.setOwner(Sivi.RED);
+		spreaderGreen = new UnbufferedSiviSpreader();
+		spreaderGreen.setOwner(Sivi.GREEN);
 
 		/*for (int i = 0; i < rows; i++) {
 			siviRed[i][0] = 4;
@@ -144,9 +155,9 @@ public class GameField {
 				} else if (cmpr > 0) {
 					siviRed[i][j] -= siviGreen[i][j];
 					siviGreen[i][j] = 0;
-				} else { // dif < 0
-					siviRed[i][j] = 0;
+				} else { // cmp < 0
 					siviGreen[i][j] -= siviRed[i][j];
+					siviRed[i][j] = 0;
 				}
 			}
 		}
@@ -331,7 +342,137 @@ public class GameField {
 		}
 	}
 
-	private class SiviSpreader {
+	interface SiviSpreader {
+		public void setOwner(Sivi owner);
+
+		public void spreadSivi(final float sec);
+	}
+
+	/*private class MutliThreadUnbufferedSiviSpreader implements SiviSpreader, Runnable {
+		private float[][] field;
+		private final float maxMult = 1 / 8f; // maximal val
+		private final float min = 0.25f;
+		private float mult;
+
+		@Override
+		public void setOwner(Sivi owner) {
+			field = getField(owner);
+		}
+
+		// for sovi flowing
+		private void resolve2Fields(final int row1, final int col1,
+				final int row2, final int col2) {
+			float dif = getSiviTerrainHeight(field, row1, col1) // check pairs
+					- getSiviTerrainHeight(field, row2, col2);
+			if (dif != 0) {
+				if ((field[row1][col1] == 0 || field[row2][col2] == 0)
+						& Math.abs(dif) < min) {
+					return;
+				}
+				// check for flowing over edges
+				if (dif > 0) {
+					dif = Math.min(dif, field[row1][col1]);
+				} else { // dif < 0
+					dif = Math.max(dif, -field[row2][col2]);
+				}
+
+				dif *= mult;
+				field[row1][col1] -= dif;
+				field[row2][col2] += dif;
+			}
+		}
+
+		private void spreadSivi0(final float sec) {
+			// TODO: better implementation of spreading
+
+			mult = 0.5f; // basic
+			mult *= sec;
+			mult = Math.min(mult, maxMult);
+
+			// only one cache friendly walk
+			for (int i = 0; i < rows; i++) { // "down"
+				for (int j = 0; j < cols; j++) { // "right"
+					if (i != 0) {
+						resolve2Fields(i, j, i - 1, j);
+					}
+					if (j != 0) {
+						resolve2Fields(i, j, i, j - 1);
+					}
+				}
+			}
+		}
+
+		@Override
+		public void spreadSivi(final float sec) {
+
+		}
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+
+		}
+
+	}//*/
+
+	private class UnbufferedSiviSpreader implements SiviSpreader {
+		private float[][] field;
+		private final float maxMult = 1 / 8f; // maximal val
+		private final float min = 0.25f;
+		private float mult;
+
+		@Override
+		public void setOwner(Sivi owner) {
+			field = getField(owner);
+		}
+
+		// for sovi flowing
+		private void resolve2Fields(final int row1, final int col1,
+				final int row2, final int col2) {
+			float dif = getSiviTerrainHeight(field, row1, col1) // check pairs
+					- getSiviTerrainHeight(field, row2, col2);
+			// check for flowing over edges
+			if (dif > 0) {
+				dif = Math.min(dif, field[row1][col1]);
+			} else { // dif < 0
+				dif = Math.max(dif, -field[row2][col2]);
+			}
+			if (dif != 0) {
+				if ((field[row1][col1] == 0 || field[row2][col2] == 0)
+						& Math.abs(dif) < min) {
+					return;
+				}
+
+				dif *= mult;
+				field[row1][col1] -= dif;
+				field[row2][col2] += dif;
+			}
+		}
+
+		@Override
+		public void spreadSivi(final float sec) {
+			// TODO: better implementation of spreading
+
+			mult = 0.5f; // basic
+			mult *= sec;
+			mult = Math.min(mult, maxMult);
+
+			// only one cache friendly walk
+			for (int i = 0; i < rows; i++) { // "down"
+				for (int j = 0; j < cols; j++) { // "right"
+					if (i != 0) {
+						resolve2Fields(i, j, i - 1, j);
+					}
+					if (j != 0) {
+						resolve2Fields(i, j, i, j - 1);
+					}
+				}
+			}
+		}
+
+	}
+
+	/*private class SiviSpreader {
 		private float[][] curSivi, newSivi;
 
 		private final Sivi player;
@@ -368,14 +509,6 @@ public class GameField {
 				}
 			}
 		}
-
-		/*private void resolveNewlyOccupiedFields() {
-			for(int i = 0; i<rows; i++) {
-				for(int j = 0; j<cols; j++) {
-					
-				}
-			}
-		}*/
 
 		private void spreadSivi0(final float sec) {
 			// TODO: better implementation of spreading
@@ -445,6 +578,6 @@ public class GameField {
 			}
 			newSivi = curSivi; // unused array to be used next time
 		}
-	}
+	}*/
 
 }

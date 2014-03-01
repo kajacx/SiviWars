@@ -9,7 +9,7 @@ public class GameConfig {
 	public int rows, cols;
 
 	public float screenHeight, screenWidth, menuHeight, fieldHeight,
-			fieldWidth;
+			fieldWidth, elemetHeight;
 
 	/**
 	 * inclusive, e.g. 5 means 0 to 5 inclusive
@@ -57,6 +57,7 @@ public class GameConfig {
 		screenWidth = Gdx.graphics.getWidth();
 
 		menuHeight = screenWidth / 8; // lets try this
+		elemetHeight = menuHeight / 10; // op
 
 		fieldHeight = screenHeight;
 		fieldWidth = screenWidth - 2 * menuHeight;
@@ -79,9 +80,10 @@ public class GameConfig {
 		maxSiviLevel = 10f;
 		maxPaintCapacity = 4f;
 
-		redSiviColor = new Color(1, 0, 0, 1);
-		// greenSiviColor = new Color(0, .9f, 0, 1);
-		greenSiviColor = new Color(0, 0, 1, 1);
+		// redSiviColor = new Color(1, 0, 0, 1);
+		redSiviColor = new Color(.75f, 0, 0, 1);
+		greenSiviColor = new Color(0, 0, .75f, 1);
+		// greenSiviColor = new Color(0, 0, 1, 1);
 	}
 
 	void recomputeRenderStep() {

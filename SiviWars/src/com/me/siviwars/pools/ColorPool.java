@@ -53,7 +53,7 @@ public class ColorPool {
 
 	private Color[] computeColorsByTerrainHeight(int terrainHeight,
 			Color baseCol) {
-		Color[] ret = new Color[(int) ((gc.maxSiviLevel - terrainHeight) * gc.scaleCount)];
+		Color[] ret = new Color[(int) ((gc.maxSiviLevel - terrainHeight) * gc.scaleCount) + 1];
 
 		float maxDif = gc.maxPaintCapacity * gc.scaleCount;
 		// float bottomBound = terrainHeight;
@@ -61,7 +61,7 @@ public class ColorPool {
 		// minimal percentage of new color
 		float minPer = .25f;
 
-		for (int i = 0; i < (gc.maxSiviLevel - terrainHeight) * gc.scaleCount; i++) {
+		for (int i = 0; i <= (gc.maxSiviLevel - terrainHeight) * gc.scaleCount; i++) {
 			// now note that 0 means 1/scalecount
 			float ratioNew = (i + 1f) / maxDif;
 

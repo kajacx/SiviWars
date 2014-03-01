@@ -17,6 +17,9 @@ import com.me.siviwars.Sivi;
  * 
  */
 public class TexturePool {
+	private final int noOfGroundTextures = 32;
+	private final int groundTexturesDigits = 3;
+	private final String groundTextureName = "thirdtest";
 
 	private static TexturePool instance;
 
@@ -36,6 +39,10 @@ public class TexturePool {
 	private int baseBuildingsCount;
 
 	public Texture movepad;
+
+	public Texture pauseButton;
+
+	private Texture[] terrainTextures;
 
 	/**
 	 * 0) builded red 1) builded green 2) building red 3) building green
@@ -132,17 +139,34 @@ public class TexturePool {
 		return fb.getColorBufferTexture();
 	}
 
+	public Texture getRandomTerrainTexture() {
+		int id = (int) (Math.random() * noOfGroundTextures);
+		if (terrainTextures[id] == null) {
+			String format = "textures/ground_textures/" + groundTextureName
+					+ "%0" + groundTexturesDigits + "d.jpg";
+			String path = String.format(format, id);
+			terrainTextures[id] = new Texture(Gdx.files.internal(path));
+		}
+		return terrainTextures[id];
+	}
+
+	private void initTerrainTextures() {
+		terrainTextures = new Texture[noOfGroundTextures];
+	}
+
 	public void init() {
 		movepad = new Texture(Gdx.files.internal("textures/util/movepad.png"));
+		pauseButton = new Texture(Gdx.files.internal("textures/util/pause.png"));
+		initTerrainTextures();
 		initBuildingTextures();
 	}
 
 	private void initBuildingTextures() {
 		baseBuildingsCount = buildingTextureNames.length;
-		buildingTextures = new Texture[4 * baseBuildingsCount];
+		buildingTextures = new Texture[5 * baseBuildingsCount];
 
-		// unrotated for red and green
-		for (int i = 0; i < 2 * baseBuildingsCount; i++) {
+		// unrotated all textures
+		for (int i = 0; i < 5 * baseBuildingsCount; i++) {
 			// Sivi owner = i < baseBuildingsCount ? Sivi.RED : Sivi.GREEN;
 			// Texture base = new
 			// Texture(Gdx.files.internal("textures/buildings/"
@@ -157,7 +181,7 @@ public class TexturePool {
 		Texture buildSign = new Texture("textures/buildings/constr.png");
 		for (int i = 0; i < 2 * baseBuildingsCount; i++) {
 			buildingTextures[i + 2 * baseBuildingsCount] = combineTextures(
-					buildingTextures[i], buildSign);
+					buildingTextures[i + 2 * baseBuildingsCount], buildSign);
 		}
 
 		// now rotate all textures in the correct way
@@ -167,6 +191,10 @@ public class TexturePool {
 			buildingTextures[i] = rotateBuildingByOwner(buildingTextures[i],
 					owner);
 		}
+	}
+
+	public Texture getBuildingTexture(int id) {
+		return buildingTextures[id + 4 * baseBuildingsCount];
 	}
 
 	public Texture getBuildingTexture(int id, Sivi owner, boolean construction) {
