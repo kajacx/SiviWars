@@ -12,9 +12,10 @@ import com.me.siviwars.buildings.ConstructedBuilding;
 
 public class InputEventHandler implements InputProcessor {
 
-	public static final boolean debug = true;
+	public static final boolean debug = false; // */ true;
 
-	private static final float epsilon = .001f; // hack for rounding down
+	private static final float epsilon = .001f;
+	// hack for not only rounding down
 
 	public static final int RED_SIVI = 0, GREEN_SIVI = 1, ROW = 0, COL = 1,
 			ROW_PAINT = 2, COL_PAINT = 3, X = 0, Y = 1; // various array
@@ -52,6 +53,9 @@ public class InputEventHandler implements InputProcessor {
 	}
 
 	public void buildBuilding(int buildingID, Sivi owner, int row, int col) {
+		if (!gf.canBuild[row][col]) { // cannot build here
+			return;
+		}
 		if (gf.getField(owner)[row][col] <= 0) { // cannot build here
 			return;
 		}
@@ -258,16 +262,17 @@ public class InputEventHandler implements InputProcessor {
 	}
 
 	public class PauseListener extends ClickListener {
-		private final Sivi owner;
+		/*private final Sivi owner;
 
 		public PauseListener(Sivi owner) {
-			this.owner = owner;
-		}
+			thi/s.owner = owner;
+		}//*/
 
 		@Override
 		public void clicked(InputEvent e, float x, float y) {
 			super.clicked(e, x, y);
-			System.out.println(owner + " has paused the game");
+			// System.out.println(owner + " has paused the game");
+			SiviWars.getInstance().pauseUnpause();
 		}
 	}
 

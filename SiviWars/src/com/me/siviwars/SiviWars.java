@@ -21,6 +21,15 @@ import com.me.siviwars.pools.MenuPool;
 import com.me.siviwars.pools.TexturePool;
 
 public class SiviWars implements ApplicationListener {
+	private boolean paused = false;
+
+	private static SiviWars _this;
+
+	public static SiviWars getInstance() {
+		return _this;
+	}
+
+	public static final float DEBUG_SPEED_COEF = 1;
 
 	public static final int RED_SIVI = InputEventHandler.RED_SIVI,
 			GREEN_SIVI = InputEventHandler.GREEN_SIVI,
@@ -62,7 +71,8 @@ public class SiviWars implements ApplicationListener {
 
 	private BuildingHPBars bhpb;
 
-	private final DelayedSpreaderMultiplex dsmx = new DelayedSpreaderMultiplex();
+	// private final DelayedSpreaderMultiplex dsmx = new
+	// DelayedSpreaderMultiplex();
 
 	private int valueToScale(float f) { // for sivi, round down
 		return (int) (f / renderStep);
@@ -72,6 +82,7 @@ public class SiviWars implements ApplicationListener {
 
 	@Override
 	public void create() {
+		_this = this;
 
 		gc = new GameConfig();
 		gc.fillDefault();
@@ -114,16 +125,27 @@ public class SiviWars implements ApplicationListener {
 			}
 		}
 
+		// fountains
+
+		// nexuses
+		gf.addBuilding(Building.createBuilding(Building.BUILDING_NEXUS, gf,
+				rows / 2, 4, Sivi.RED));
+		gf.addBuilding(Building.createBuilding(Building.BUILDING_NEXUS, gf,
+				rows / 2, cols - 5, Sivi.GREEN));
+
+		Vector2 redStart = ieh.getCenterOfField(rows / 2, 4);
+		ieh.setCursorHotspot(RED_SIVI, redStart.x, redStart.y);
+		Vector2 greenStart = ieh.getCenterOfField(rows / 2, cols - 5);
+		ieh.setCursorHotspot(GREEN_SIVI, greenStart.x, greenStart.y);
+
 		Building redFountain = new Fountain(gf, rows / 2, 1, Sivi.RED, 1);
 		gf.addBuilding(redFountain);
-		Vector2 redStart = ieh.getCenterOfField(rows / 2, 1);
-		ieh.setCursorHotspot(RED_SIVI, redStart.x, redStart.y);
 
 		Building greenFountain = new Fountain(gf, rows / 2, cols - 2,
 				Sivi.GREEN, 1);
 		gf.addBuilding(greenFountain);
-		Vector2 greenStart = ieh.getCenterOfField(rows / 2, cols - 2);
-		ieh.setCursorHotspot(GREEN_SIVI, greenStart.x, greenStart.y);
+
+		gf.reevaluateBuildingPlaces(0, 0, rows - 1, cols - 1);
 
 		/*redFountain = new Fountain(gf, rows / 2, 5, Sivi.RED, 1);
 		redFountain = new BuildingConstruction(
@@ -137,8 +159,8 @@ public class SiviWars implements ApplicationListener {
 		redMenuPool = new MenuPool(Sivi.RED, ieh, gc);
 		greenMenuPool = new MenuPool(Sivi.GREEN, ieh, gc);
 
-		stage.addActor(redMenuPool.createTestTable());
-		stage.addActor(greenMenuPool.createTestTable());// */
+		stage.addActor(redMenuPool.createTable());
+		stage.addActor(greenMenuPool.createTable());// */
 
 		/*Image i = new Image(tp.movepad);
 		i.setColor(1, 0, 0, .5f);
@@ -178,6 +200,14 @@ public class SiviWars implements ApplicationListener {
 		bhpb = new BuildingHPBars(gc);
 
 		Gdx.input.setInputProcessor(im);
+
+		// Gdx.gl.glEnable(GL10.GL_BLEND);
+	}
+
+	public void pauseUnpause() {
+		paused = !paused;
+		redMenuPool.setPauseButton(paused);
+		greenMenuPool.setPauseButton(paused);
 	}
 
 	@Override
@@ -190,14 +220,16 @@ public class SiviWars implements ApplicationListener {
 		Gdx.gl.glClearColor(.6f, 1f, .6f, 1);
 		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 
-		final float delta = Math.min(Gdx.graphics.getDeltaTime(), maxDelta);
+		final float delta = Math.min(Gdx.graphics.getDeltaTime()
+				* DEBUG_SPEED_COEF, maxDelta);
 
-		gf.routineActionBuildings(delta);
-		// dsmx.addDelta(delta);
-		gf.spreadSivi(delta);
-		gf.siviSweep();
-
-		ieh.routineAction(delta);
+		if (!paused) {
+			gf.routineActionBuildings(delta);
+			// dsmx.addDelta(delta);
+			gf.spreadSivi(delta);
+			gf.siviSweep();
+		}
+		ieh.routineAction(delta); // this only moves cursors
 
 		Color c;
 		batch.begin();
@@ -229,12 +261,18 @@ public class SiviWars implements ApplicationListener {
 
 		batch.setColor(Color.WHITE);
 
-		for (Building b : gf.buildings) {
-
-			batch.draw(b.texture, b.col * colsCoef + spaceSmall + menuHeight,
-					b.row * rowsCoef + spaceSmall, colsCoef - spaceSmall2,
-					rowsCoef - spaceSmall2);
+		// for (Building b : gf.buildings) {
+		Building b;
+		for (int row = 0; row < rows; row++) {
+			for (int col = 0; col < cols; col++) {
+				if ((b = gf.buildings[row][col]) != null) {
+					batch.draw(b.texture, col * colsCoef + spaceSmall
+							+ menuHeight, row * rowsCoef + spaceSmall, colsCoef
+							- spaceSmall2, rowsCoef - spaceSmall2);
+				}
+			}
 		}
+		// }
 
 		/*if (gf.buildings.size() > 2) {
 			bhpb.drawHPBar(gf.buildings.get(2), null);
@@ -244,10 +282,18 @@ public class SiviWars implements ApplicationListener {
 
 		batch.end();
 
+		Gdx.gl20.glLineWidth(2);
 		renderer.begin(ShapeType.Line);
-		for (Building b : gf.buildings) {
-			bhpb.drawHPBar(b, renderer);
+		for (int row = 0; row < rows; row++) {
+			for (int col = 0; col < cols; col++) {
+				if ((b = gf.buildings[row][col]) != null) {
+					bhpb.drawHPBar(b, renderer);
+				}
+			}
 		}
+		/*for (Building b : gf.buildings) {
+			bhpb.drawHPBar(b, renderer);
+		}*/
 		renderer.end();
 
 		renderer.begin(ShapeType.Filled);
@@ -261,6 +307,16 @@ public class SiviWars implements ApplicationListener {
 		// pointers
 		batch.begin();
 
+		batch.setColor(Color.WHITE);
+		batch.draw(pointerRed, ieh.cursors[RED_SIVI][COL_PAINT],
+				ieh.cursors[RED_SIVI][ROW_PAINT], ieh.cursorSize,
+				ieh.cursorSize);
+
+		// batch.setColor(cp.baseGreen);
+		batch.draw(pointerGreen, ieh.cursors[GREEN_SIVI][COL_PAINT],
+				ieh.cursors[GREEN_SIVI][ROW_PAINT], ieh.cursorSize,
+				ieh.cursorSize);
+
 		batch.setColor(cp.baseRed);
 		batch.draw(pointerRed, ieh.cursors[RED_SIVI][COL_PAINT],
 				ieh.cursors[RED_SIVI][ROW_PAINT], ieh.cursorSize,
@@ -270,6 +326,8 @@ public class SiviWars implements ApplicationListener {
 		batch.draw(pointerGreen, ieh.cursors[GREEN_SIVI][COL_PAINT],
 				ieh.cursors[GREEN_SIVI][ROW_PAINT], ieh.cursorSize,
 				ieh.cursorSize);
+		// batch.end();
+
 		batch.end();
 
 	}
@@ -367,7 +425,11 @@ public class SiviWars implements ApplicationListener {
 		return i;
 	}
 
-	private class DelayedSpreaderMultiplex {
+	public void setWinner(Sivi owner) {
+		// TODO: winner
+	}
+
+	/*private class DelayedSpreaderMultiplex {
 		final float minDelta = 0.05f;
 		float curDelta;
 		boolean stackingForRed;
@@ -389,5 +451,5 @@ public class SiviWars implements ApplicationListener {
 			// gf.spreadSivi(curDelta);
 			curDelta = 0;
 		}
-	}
+	}//*/
 }

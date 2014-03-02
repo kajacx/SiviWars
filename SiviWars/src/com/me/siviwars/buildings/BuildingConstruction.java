@@ -4,21 +4,18 @@ import com.me.siviwars.pools.TexturePool;
 
 public class BuildingConstruction extends Building {
 
-	ConstructedBuilding constructedBuilding;
-
-	float constructionProcess; // from 0 to 1
-
-	float price;
+	private final ConstructedBuilding constructedBuilding;
 
 	public BuildingConstruction(ConstructedBuilding constructedBuilding) {
 		super(constructedBuilding.gf, constructedBuilding.row,
 				constructedBuilding.col, constructedBuilding.owner,
 				constructedBuilding.id);
-		price = constructedBuilding.price;
 		this.constructedBuilding = constructedBuilding;
 
 		texture = TexturePool.getTexturePool().getBuildingTexture(
 				constructedBuilding.id, constructedBuilding.owner, true);
+
+		healthCur = 0;// healthMax * InputEventHandler.epsilon;
 	}
 
 	private void constructionComplete() {
@@ -28,17 +25,12 @@ public class BuildingConstruction extends Building {
 
 	@Override
 	public void routineAction(float time) {
-		float collected = withdrawSivi(time);
-		constructionProcess += collected / price;
+		/*float collected = withdrawSivi(time);
+		healthCur += collected;//*/// now done is building damageOrHeal method
 		// System.out.format("%.3f, %.3f\n", collected, constructionProcess);
-		if (constructionProcess >= 1) {
+		if (healthCur >= healthMax) {
 			constructionComplete();
 		}
-	}
-
-	@Override
-	public float getHealthbar() {
-		return constructionProcess;
 	}
 
 }

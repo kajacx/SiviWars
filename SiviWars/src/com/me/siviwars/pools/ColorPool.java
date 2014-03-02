@@ -11,6 +11,8 @@ import com.me.siviwars.GameConfig;
  */
 public class ColorPool {
 
+	private final float maxRatio = .5f;
+
 	private static ColorPool instance;
 
 	public static ColorPool getColorPool() {
@@ -72,8 +74,8 @@ public class ColorPool {
 			ratioNew *= 1f / (1f + minPer);
 
 			// upper bound check after surpassing max paint capacity
-			if (ratioNew > 1f) {
-				ratioNew = 1f;
+			if (ratioNew > maxRatio) {
+				ratioNew = maxRatio;
 			}
 
 			// System.out.format("%d: %1.2f\n", i, ratioNew);

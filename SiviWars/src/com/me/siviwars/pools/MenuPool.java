@@ -1,9 +1,12 @@
 package com.me.siviwars.pools;
 
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.Align;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.me.siviwars.GameConfig;
 import com.me.siviwars.InputEventHandler;
 import com.me.siviwars.Sivi;
@@ -15,6 +18,9 @@ public class MenuPool {
 	private final InputEventHandler ieh;
 	// private final TexturePool tp;
 	private final GameConfig gc;
+	private Image pauseButton;
+
+	private Drawable pauseImage, unpauseImage;
 
 	public MenuPool(Sivi owner, InputEventHandler ieh, GameConfig gc) {
 		this.owner = owner;
@@ -30,9 +36,9 @@ public class MenuPool {
 		return em;
 	}*/
 
-	private Actor createPauseButton() {
-		Image i = new Image(TexturePool.getTexturePool().pauseButton);
-		i.addListener(ieh.new PauseListener(owner));
+	private Image createPauseButton() {
+		Image i = new Image(pauseImage);
+		i.addListener(ieh.new PauseListener(/*owner*/));
 		return i;
 	}
 
@@ -44,7 +50,12 @@ public class MenuPool {
 		return i;
 	}
 
-	public Table createTestTable() {
+	public Table createTable() {
+		pauseImage = new TextureRegionDrawable(new TextureRegion(
+				TexturePool.getTexturePool().pauseButton));
+		unpauseImage = new TextureRegionDrawable(new TextureRegion(
+				TexturePool.getTexturePool().unpauseButton));
+
 		Table test = new Table();
 
 		test.align(Align.center);
@@ -56,7 +67,8 @@ public class MenuPool {
 
 		test.setSize(width, height);
 
-		test.add(createPauseButton()).size(width / noOfElements, height);
+		test.add(pauseButton = createPauseButton()).size(width / noOfElements,
+				height);
 		test.add(createBuildingButton(Building.BUILDING_FOUNTAIN)).size(
 				width / noOfElements, height);
 
@@ -75,14 +87,11 @@ public class MenuPool {
 		return test;
 	}
 
-	public Table createRootTable() {
+	public void setPauseButton(boolean paused) {
+		pauseButton.setDrawable(paused ? unpauseImage : pauseImage);
+	}
+	/*public Table createRootTable() {
 		Table root = new Table();
-
-		/*root.add(createMovepad());
-		root.add(createMovepad());
-		root.add(createMovepad());
-		root.add(createMovepad());// */
-		// root.add(createElevationMeter());
 
 		root.setFillParent(false);
 
@@ -93,8 +102,8 @@ public class MenuPool {
 
 		float pos = owner == Sivi.RED ? gc.screenHeight : gc.screenWidth;
 		pos *= .5f;
-		root.setOrigin(pos, pos);// */
+		root.setOrigin(pos, pos);
 
 		return root;
-	}
+	}//*/
 }

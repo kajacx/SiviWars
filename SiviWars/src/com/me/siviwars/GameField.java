@@ -1,7 +1,5 @@
 package com.me.siviwars;
 
-import java.util.ArrayList;
-
 import com.me.siviwars.buildings.Building;
 
 public class GameField {
@@ -19,8 +17,10 @@ public class GameField {
 
 	public int[][] terrainHeight;
 
-	// public Building[][] buildings;
-	public ArrayList<Building> buildings = new ArrayList<Building>();
+	public Building[][] buildings;
+
+	public boolean[][] canBuild;
+	// public ArrayList<Building> buildings = new ArrayList<Building>();
 
 	SiviSpreader spreaderRed, spreaderGreen;
 
@@ -35,7 +35,7 @@ public class GameField {
 		val += howMuch;
 		if (val + terrainHeight[row][col] > maxValue) {
 			val = maxValue - terrainHeight[row][col];
-			System.out.println("OF " + row + " " + col);
+			// System.out.println("OF " + row + " " + col);
 		}
 		/*if (row == 10 && col == 1) {
 			System.out.println("hotspot set: " + val);
@@ -51,12 +51,23 @@ public class GameField {
 	 * @return
 	 */
 	public Building getBuilding(int row, int col) {
-		for (Building b : buildings) {
+		/*for (Building b : buildings) {
 			if (b.row == row && b.col == col) {
 				return b;
 			}
 		}
-		return null;
+		return null;//*/
+		return buildings[row][col];
+	}
+
+	public Sivi getOccupator(int row, int col) {
+		if (getField(Sivi.RED)[row][col] > 0) {
+			return Sivi.RED;
+		}
+		if (getField(Sivi.GREEN)[row][col] > 0) {
+			return Sivi.GREEN;
+		}
+		return Sivi.NEUTRAL;
 	}
 
 	/**
@@ -65,20 +76,58 @@ public class GameField {
 	 * @param b
 	 */
 	public void addBuilding(Building b) {
-		Building toRemove = getBuilding(b.row, b.col);
+		/*Building toRemove = getBuilding(b.row, b.col);
 		if (toRemove != null) {
 			buildings.remove(toRemove);
 		}
-		buildings.add(b);
+		buildings.add(b);//*/
+		buildings[b.row][b.col] = b;
+		for (int i = -1; i <= 1; i++) {
+			if ((b.row + i) < 0 || (b.row + i) >= rows) {
+				continue;
+			}
+			for (int j = -1; j <= 1; j++) {
+				if ((b.col + j) < 0 || (b.col + j) >= cols) {
+					continue;
+				}
+				canBuild[b.row + i][b.col + j] = false;
+			}
+		}
 	}
 
-	@SuppressWarnings("unchecked")
+	public void removeBuilding(Building b) {
+		buildings[b.row][b.col] = null;
+		for (int i = -1; i <= 1; i++) {
+			if ((b.row + i) < 0 || (b.row + i) >= rows) {
+				continue;
+			}
+			for (int j = -1; j <= 1; j++) {
+				if ((b.col + j) < 0 || (b.col + j) >= cols) {
+					continue;
+				}
+				canBuild[b.row + i][b.col + j] = true;
+			}
+		}
+		reevaluateBuildingPlaces(b.row - 2, b.col - 2, b.row + 2, b.col + 2);
+	}
+
 	public void routineActionBuildings(final float time) {
 		// for (Building[] bs : ) {
-		for (Building b : (ArrayList<Building>) buildings.clone()) {
+		/*for (Building b : (ArrayList<Building>) buildings.clone()) {
 			b.routineAction(time);
-		}
+		}*/
 		// }
+		Building b;
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				if ((b = buildings[i][j]) != null) {
+					b.takeDamageOrHeal(time);
+					if (!b.isDestroyed()) {
+						b.routineAction(time);
+					}
+				}
+			}
+		}
 	}
 
 	public void spreadSivi(final float time) {
@@ -95,6 +144,31 @@ public class GameField {
 		return terrainHeight[row][col] + sivi[row][col];
 	}
 
+	public void reevaluateBuildingPlaces(int fromRow, int fromCol, int toRow,
+			int toCol) {
+		for (int row = fromRow; row <= toRow; row++) {
+			for (int col = fromCol; col <= toCol; col++) {
+				if (row < 0 || row >= rows || col < 0 || col >= cols) {
+					continue;
+				}
+				if (buildings[row][col] == null) {
+					continue;
+				}
+				for (int i = -1; i <= 1; i++) {
+					if ((row + i) < 0 || (row + i) >= rows) {
+						continue;
+					}
+					for (int j = -1; j <= 1; j++) {
+						if ((col + j) < 0 || (col + j) >= cols) {
+							continue;
+						}
+						canBuild[row + i][col + j] = false;
+					}
+				}
+			}
+		}
+	}
+
 	public GameField(GameConfig gc) {
 		this.rows = gc.rows;
 		this.cols = gc.cols;
@@ -106,7 +180,14 @@ public class GameField {
 
 		terrainHeight = new int[rows][cols];
 
-		buildings = new ArrayList<Building>();
+		buildings = new Building[rows][cols];
+
+		canBuild = new boolean[rows][cols];
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				canBuild[i][j] = true;
+			}
+		}
 
 		baseMinValue = gc.renderStep;
 
@@ -431,7 +512,7 @@ public class GameField {
 				final int row2, final int col2) {
 			float dif = getSiviTerrainHeight(field, row1, col1) // check pairs
 					- getSiviTerrainHeight(field, row2, col2);
-			// check for flowing over edges
+			// check for flowing over edges, belive it
 			if (dif > 0) {
 				dif = Math.min(dif, field[row1][col1]);
 			} else { // dif < 0

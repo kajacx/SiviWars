@@ -34,13 +34,14 @@ public class TexturePool {
 		return instance;
 	}
 
-	private static final String[] buildingTextureNames = { "fountain0.jpg" };
+	private static final String[] buildingTextureNames = { "fountain0.jpg",
+			"nexus.png" };
 
 	private int baseBuildingsCount;
 
 	public Texture movepad;
 
-	public Texture pauseButton;
+	public Texture pauseButton, unpauseButton;
 
 	private Texture[] terrainTextures;
 
@@ -157,6 +158,8 @@ public class TexturePool {
 	public void init() {
 		movepad = new Texture(Gdx.files.internal("textures/util/movepad.png"));
 		pauseButton = new Texture(Gdx.files.internal("textures/util/pause.png"));
+		unpauseButton = new Texture(
+				Gdx.files.internal("textures/util/unpause.png"));
 		initTerrainTextures();
 		initBuildingTextures();
 	}

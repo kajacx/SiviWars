@@ -7,4 +7,15 @@ public enum Sivi {
 	private Sivi(int o) {
 		ordinal = o;
 	}
+
+	public Sivi invert() {
+		switch (this) {
+		case RED:
+			return GREEN;
+		case GREEN:
+			return RED;
+		default:
+			return NEUTRAL;
+		}
+	}
 }

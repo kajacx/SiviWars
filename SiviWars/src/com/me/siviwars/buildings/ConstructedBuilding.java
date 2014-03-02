@@ -6,11 +6,6 @@ import com.me.siviwars.pools.TexturePool;
 
 public abstract class ConstructedBuilding extends Building {
 
-	public float price; // how much to build this
-
-	public float healtCur; // how much cur health
-	public float healtMax; // how much max health
-
 	public ConstructedBuilding(GameField gf, int row, int col, Sivi owner,
 			int id) {
 		super(gf, row, col, owner, id);
@@ -18,15 +13,13 @@ public abstract class ConstructedBuilding extends Building {
 		texture = TexturePool.getTexturePool().getBuildingTexture(id, owner,
 				false);
 
-		price = getPrice();
-
-		healtMax = healtCur = price;
+		healthCur = healthMax;
 	}
 
-	public abstract float getPrice();
+	// public abstract float getPrice();
 
-	@Override
+	/*@Override
 	public float getHealthbar() {
 		return healtCur / healtMax;
-	}
+	}//*/
 }

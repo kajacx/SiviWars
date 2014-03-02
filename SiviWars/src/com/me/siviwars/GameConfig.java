@@ -78,7 +78,7 @@ public class GameConfig {
 		recomputeRenderStep();
 
 		maxSiviLevel = 10f;
-		maxPaintCapacity = 4f;
+		maxPaintCapacity = 5f;
 
 		// redSiviColor = new Color(1, 0, 0, 1);
 		redSiviColor = new Color(.75f, 0, 0, 1);

@@ -18,8 +18,8 @@ public class Fountain extends ConstructedBuilding {
 		gf.addSiviSoft(row, col, spawn * time, owner);
 	}
 
-	@Override
+	/*@Override
 	public float getPrice() {
 		return 10;
-	}
+	}//*/
 }
