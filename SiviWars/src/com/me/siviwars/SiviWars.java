@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
@@ -14,11 +15,11 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.me.siviwars.buildings.Building;
-import com.me.siviwars.buildings.Fountain;
 import com.me.siviwars.drawing.BuildingHPBars;
 import com.me.siviwars.pools.ColorPool;
 import com.me.siviwars.pools.MenuPool;
 import com.me.siviwars.pools.TexturePool;
+import com.me.siviwars.units.Unit;
 
 public class SiviWars implements ApplicationListener {
 	private boolean paused = false;
@@ -29,7 +30,7 @@ public class SiviWars implements ApplicationListener {
 		return _this;
 	}
 
-	public static final float DEBUG_SPEED_COEF = 1;
+	public static final float DEBUG_SPEED_COEF = 1.5f;// 5;
 
 	public static final int RED_SIVI = InputEventHandler.RED_SIVI,
 			GREEN_SIVI = InputEventHandler.GREEN_SIVI,
@@ -70,6 +71,11 @@ public class SiviWars implements ApplicationListener {
 	private TexturePool tp;
 
 	private BuildingHPBars bhpb;
+
+	private BitmapFont font;// = new BitmapFont();
+
+	/*Gdx.files.internal("Calibri.fnt"),
+	Gdx.files.internal("Calibri.png"), false);*/
 
 	// private final DelayedSpreaderMultiplex dsmx = new
 	// DelayedSpreaderMultiplex();
@@ -128,29 +134,27 @@ public class SiviWars implements ApplicationListener {
 		// fountains
 
 		// nexuses
-		gf.addBuilding(Building.createBuilding(Building.BUILDING_NEXUS, gf,
-				rows / 2, 4, Sivi.RED));
-		gf.addBuilding(Building.createBuilding(Building.BUILDING_NEXUS, gf,
-				rows / 2, cols - 5, Sivi.GREEN));
+		gf.addBuilding(Building.redNexus = Building.createBuilding(
+				Building.BUILDING_NEXUS, gf, rows / 2, 4, Sivi.RED));
+		gf.addBuilding(Building.greenNexus = Building.createBuilding(
+				Building.BUILDING_NEXUS, gf, rows / 2, cols - 5, Sivi.GREEN));
+
+		// tester = new BaseUnit(Building.redNexus);
 
 		Vector2 redStart = ieh.getCenterOfField(rows / 2, 4);
 		ieh.setCursorHotspot(RED_SIVI, redStart.x, redStart.y);
 		Vector2 greenStart = ieh.getCenterOfField(rows / 2, cols - 5);
 		ieh.setCursorHotspot(GREEN_SIVI, greenStart.x, greenStart.y);
 
-		Building redFountain = new Fountain(gf, rows / 2, 1, Sivi.RED, 1);
+		Building redFountain = Building.createBuilding(
+				Building.BUILDING_FOUNTAIN, gf, rows / 2, 1, Sivi.RED);
 		gf.addBuilding(redFountain);
 
-		Building greenFountain = new Fountain(gf, rows / 2, cols - 2,
-				Sivi.GREEN, 1);
+		Building greenFountain = Building.createBuilding(
+				Building.BUILDING_FOUNTAIN, gf, rows / 2, cols - 2, Sivi.GREEN);
 		gf.addBuilding(greenFountain);
 
 		gf.reevaluateBuildingPlaces(0, 0, rows - 1, cols - 1);
-
-		/*redFountain = new Fountain(gf, rows / 2, 5, Sivi.RED, 1);
-		redFountain = new BuildingConstruction(
-				(ConstructedBuilding) redFountain);
-		gf.addBuilding(redFountain);*/
 
 		InputMultiplexer im = new InputMultiplexer();
 
@@ -160,12 +164,7 @@ public class SiviWars implements ApplicationListener {
 		greenMenuPool = new MenuPool(Sivi.GREEN, ieh, gc);
 
 		stage.addActor(redMenuPool.createTable());
-		stage.addActor(greenMenuPool.createTable());// */
-
-		/*Image i = new Image(tp.movepad);
-		i.setColor(1, 0, 0, .5f);
-
-		stage.addActor(i);*/
+		stage.addActor(greenMenuPool.createTable());
 
 		Actor redMp = createMovePad(Sivi.RED);
 		stage.addActor(redMp);
@@ -173,22 +172,10 @@ public class SiviWars implements ApplicationListener {
 		Actor greenMp = createMovePad(Sivi.GREEN);
 		greenMp.setPosition(gc.screenWidth - gc.menuHeight, gc.screenHeight
 				- gc.menuHeight);
-		// greenMp.set
 		stage.addActor(greenMp);
 
-		// ElevationMeter elemetRed = new ElevationMeter(Sivi.RED, ieh);
-		/*elemetRed.setPosition(gc.menuHeight - gc.elemetHeight, gc.menuHeight);
-		elemetRed.setSize(gc.elemetHeight, gc.screenHeight - gc.menuHeight);*/
-		/*elemetRed.setPosition(30, 90);
-		elemetRed.setSize(30, 30);
-		elemetRed.init();
-		stage.addActor(elemetRed);*/
 		elemetRed = new ElemetDrawer(Sivi.RED, gc.menuHeight - gc.elemetHeight,
 				gc.menuHeight, gc.elemetHeight, gc.screenHeight - gc.menuHeight);
-
-		/*elemetGreen = new ElemetDrawer(Sivi.GREEN, gc.menuHeight
-				+ gc.screenWidth, 0, gc.elemetHeight, gc.screenHeight
-				- gc.menuHeight);*/
 
 		elemetGreen = new ElemetDrawer(Sivi.GREEN, gc.menuHeight
 				+ gc.fieldWidth, 0, gc.elemetHeight, gc.screenHeight
@@ -197,11 +184,14 @@ public class SiviWars implements ApplicationListener {
 		im.addProcessor(stage);
 		im.addProcessor(ieh);
 
+		// gf.addUnit(new Unit(Building.redNexus));
+
 		bhpb = new BuildingHPBars(gc);
 
 		Gdx.input.setInputProcessor(im);
 
-		// Gdx.gl.glEnable(GL10.GL_BLEND);
+		// System.out.println(Gdx.files.internal("fonts/arial-15.fnt"));
+		font = new BitmapFont();
 	}
 
 	public void pauseUnpause() {
@@ -228,6 +218,7 @@ public class SiviWars implements ApplicationListener {
 			// dsmx.addDelta(delta);
 			gf.spreadSivi(delta);
 			gf.siviSweep();
+			gf.unitsAction(delta);
 		}
 		ieh.routineAction(delta); // this only moves cursors
 
@@ -272,13 +263,6 @@ public class SiviWars implements ApplicationListener {
 				}
 			}
 		}
-		// }
-
-		/*if (gf.buildings.size() > 2) {
-			bhpb.drawHPBar(gf.buildings.get(2), null);
-		}*/
-
-		// System.out.println("")
 
 		batch.end();
 
@@ -291,10 +275,18 @@ public class SiviWars implements ApplicationListener {
 				}
 			}
 		}
-		/*for (Building b : gf.buildings) {
-			bhpb.drawHPBar(b, renderer);
-		}*/
 		renderer.end();
+
+		batch.begin();
+		// paint units
+		Unit u = gf.unitHead.next;
+		while (u != gf.unitHead) {
+			batch.setColor(cp.getBaseColor(u.owner));
+			batch.draw(tp.unit, u.yPos - colsCoef / 3, u.xPos - rowsCoef / 3,
+					colsCoef * 2 / 3, rowsCoef * 2 / 3);
+			u = u.next;
+		}
+		batch.end();
 
 		renderer.begin(ShapeType.Filled);
 		elemetRed.drawElevem();
@@ -328,6 +320,8 @@ public class SiviWars implements ApplicationListener {
 				ieh.cursorSize);
 		// batch.end();
 
+		batch.setColor(Color.WHITE);
+		font.draw(batch, Gdx.graphics.getFramesPerSecond() + "", 10, 20);
 		batch.end();
 
 	}

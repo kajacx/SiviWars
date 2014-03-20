@@ -1,8 +1,11 @@
 package com.me.siviwars;
 
 import com.me.siviwars.buildings.Building;
+import com.me.siviwars.units.Unit;
 
 public class GameField {
+	public static GameField _this;
+
 	public int rows;
 	public int cols;
 	public float maxValue;
@@ -21,8 +24,22 @@ public class GameField {
 
 	public boolean[][] canBuild;
 	// public ArrayList<Building> buildings = new ArrayList<Building>();
+	public Unit /*tester, */unitHead;
 
 	SiviSpreader spreaderRed, spreaderGreen;
+
+	/**
+	 * checks bounds
+	 * 
+	 * @param row
+	 *            row
+	 * @param col
+	 *            col
+	 * @return true if valid position
+	 */
+	public boolean boundCheck(int row, int col) {
+		return row >= 0 && row < rows && col >= 0 && col < cols;
+	}
 
 	private void genRandTerrain() {
 		new FloatTerrainGenerator().generate();
@@ -190,6 +207,7 @@ public class GameField {
 		}
 
 		baseMinValue = gc.renderStep;
+		unitHead = new Unit(null);
 
 		genRandTerrain();
 
@@ -198,19 +216,33 @@ public class GameField {
 		spreaderGreen = new UnbufferedSiviSpreader();
 		spreaderGreen.setOwner(Sivi.GREEN);
 
-		/*for (int i = 0; i < rows; i++) {
-			siviRed[i][0] = 4;
-			siviRed[i][1] = 2;
+		_this = this;
+	}
 
-			siviGreen[i][cols - 2] = 2;
-			siviGreen[i][cols - 1] = 4;
-		}*/
+	public void addUnit(Unit u) {
+		Unit before = unitHead;
+		Unit after = unitHead.next;
+		before.next = u;
+		u.next = after;
+		after.previous = u;
+		u.previous = before;
+	}
 
-		/*for (int j = 0; j < rows; j++) {
-			for (int i = 0; i < cols; i++) {
-				terrainHeight[j][i] = j;
-			}
-		}*/
+	public void removeUnit(Unit u) {
+		Unit before = u.previous;
+		Unit after = u.next;
+		before.next = after;
+		after.previous = before;
+	}
+
+	public void unitsAction(float time) {
+		Unit current;// = unitHead;
+		Unit next = unitHead.next;
+		while (next != unitHead) {
+			current = next;
+			next = current.next;
+			current.routineAction(time);
+		}
 	}
 
 	public float[][] getField(Sivi owner) {

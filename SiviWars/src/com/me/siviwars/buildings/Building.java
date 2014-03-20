@@ -1,14 +1,19 @@
 package com.me.siviwars.buildings;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 import com.me.siviwars.GameField;
+import com.me.siviwars.InputEventHandler;
 import com.me.siviwars.Sivi;
 import com.me.siviwars.interfaces.Healthbar;
 import com.me.siviwars.interfaces.RoutineAction;
 
 public abstract class Building implements Healthbar, RoutineAction {
 
-	public static final int BUILDING_FOUNTAIN = 0, BUILDING_NEXUS = 1;
+	public static final int BUILDING_FOUNTAIN = 0, BUILDING_NEXUS = 1,
+			BUILDING_SPAWNER = 2;
+
+	public static Building redNexus, greenNexus;
 
 	public int row, col, id;
 
@@ -18,13 +23,26 @@ public abstract class Building implements Healthbar, RoutineAction {
 
 	public Texture texture;
 
+	public Vector2 centerPoint;
+
 	public final float healthMax = 10f; // how much max health
-	protected float healthCur; // how much cur health
+	protected float healthCur; // how much cur health, not in %
 
 	// can take sivi?
 	private boolean withdrawed = false;
 
 	private boolean isDestroyed = false;
+
+	public static Building getNexus(Sivi owner) {
+		switch (owner) {
+		case RED:
+			return redNexus;
+		case GREEN:
+			return greenNexus;
+		default:
+			return null;
+		}
+	}
 
 	public Building(GameField gf, int row, int col, Sivi owner, int id) {
 		this.gf = gf;
@@ -32,6 +50,7 @@ public abstract class Building implements Healthbar, RoutineAction {
 		this.col = col;
 		this.owner = owner;
 		this.id = id;
+		centerPoint = InputEventHandler._this.getCenterOfField(row, col);
 	}
 
 	protected void destroy() {
@@ -109,6 +128,8 @@ public abstract class Building implements Healthbar, RoutineAction {
 			return new Fountain(gf, row, col, owner, 1);
 		case BUILDING_NEXUS:
 			return new Nexus(gf, row, col, owner);
+		case BUILDING_SPAWNER:
+			return new Spawner(gf, row, col, owner);
 		default:
 			return null;
 		}

@@ -2,6 +2,7 @@ package com.me.siviwars.pools;
 
 import com.badlogic.gdx.graphics.Color;
 import com.me.siviwars.GameConfig;
+import com.me.siviwars.Sivi;
 
 /**
  * singleton
@@ -39,6 +40,17 @@ public class ColorPool {
 
 	public Color baseRed;
 	public Color baseGreen;
+
+	public Color getBaseColor(Sivi owner) {
+		switch (owner) {
+		case RED:
+			return baseRed;
+		case GREEN:
+			return baseGreen;
+		default:
+			return null;
+		}
+	}
 
 	/**
 	 * Game config must be set before calling this

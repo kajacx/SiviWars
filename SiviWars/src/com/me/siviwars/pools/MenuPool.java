@@ -71,6 +71,8 @@ public class MenuPool {
 				height);
 		test.add(createBuildingButton(Building.BUILDING_FOUNTAIN)).size(
 				width / noOfElements, height);
+		test.add(createBuildingButton(Building.BUILDING_SPAWNER)).size(
+				width / noOfElements, height);
 
 		test.setFillParent(false);
 

@@ -12,10 +12,14 @@ import com.me.siviwars.buildings.ConstructedBuilding;
 
 public class InputEventHandler implements InputProcessor {
 
-	public static final boolean debug = false; // */ true;
+	private static final int[] tmp2arr = new int[2];
+
+	public static final boolean debug = /*false; // */true;
 
 	private static final float epsilon = .001f;
 	// hack for not only rounding down
+
+	public static InputEventHandler _this;
 
 	public static final int RED_SIVI = 0, GREEN_SIVI = 1, ROW = 0, COL = 1,
 			ROW_PAINT = 2, COL_PAINT = 3, X = 0, Y = 1; // various array
@@ -50,6 +54,7 @@ public class InputEventHandler implements InputProcessor {
 		this.gf = gf;
 		setCursorHotspot(RED_SIVI, 50, 50);
 		setCursorHotspot(GREEN_SIVI, 50, 50);
+		_this = this;
 	}
 
 	public void buildBuilding(int buildingID, Sivi owner, int row, int col) {
@@ -75,7 +80,7 @@ public class InputEventHandler implements InputProcessor {
 	 * @param row
 	 * @param col
 	 */
-	void setCursorHotspot(int cursorOwner, float row, float col) {
+	public void setCursorHotspot(int cursorOwner, float row, float col) {
 		if (row < 0) {
 			row = 0;
 		} else if (row >= gc.fieldHeight) {
@@ -172,12 +177,19 @@ public class InputEventHandler implements InputProcessor {
 		return new Vector2(x, y);
 	}
 
-	public int[] getRowAndColOfCursor(int cursorOwner) {
-		float row = cursors[cursorOwner][ROW];
-		float col = cursors[cursorOwner][COL];
+	public int[] getRowAndColOfPosition(float row, float col) {
 		int rowi = (int) (row / gc.rowsCoef);
 		int coli = (int) ((col - gc.menuHeight) / gc.colsCoef);
-		return new int[] { rowi, coli };
+		// return new int[] { rowi, coli };
+		tmp2arr[0] = rowi;
+		tmp2arr[1] = coli;
+		return tmp2arr;
+	}
+
+	// warning: cant be parralel
+	public int[] getRowAndColOfCursor(int cursorOwner) {
+		return getRowAndColOfPosition(cursors[cursorOwner][ROW],
+				cursors[cursorOwner][COL]);
 	}
 
 	public class ConstructBuildingListener extends ClickListener {
