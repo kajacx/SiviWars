@@ -1,6 +1,7 @@
 package com.me.siviwars;
 
 import com.badlogic.gdx.Input.Buttons;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -14,10 +15,10 @@ public class InputEventHandler implements InputProcessor {
 
 	private static final int[] tmp2arr = new int[2];
 
-	public static final boolean debug = /*false; // */true;
-
 	private static final float epsilon = .001f;
 	// hack for not only rounding down
+
+	private static final float keyboardMovepadSpeed = .5f;
 
 	public static InputEventHandler _this;
 
@@ -26,6 +27,8 @@ public class InputEventHandler implements InputProcessor {
 														// indexing
 
 	public float[][] cursors = new float[2][4];
+
+	public boolean globalBuildEnabled;
 
 	private final float[][] movepadVectors = new float[2][2];
 
@@ -49,6 +52,10 @@ public class InputEventHandler implements InputProcessor {
 		}
 	}
 
+	/*private void moveCursorRelative(int owner, float row, float col) {
+		
+	}*/
+
 	InputEventHandler(GameConfig gc, GameField gf) {
 		this.gc = gc;
 		this.gf = gf;
@@ -58,6 +65,9 @@ public class InputEventHandler implements InputProcessor {
 	}
 
 	public void buildBuilding(int buildingID, Sivi owner, int row, int col) {
+		if (!globalBuildEnabled) { // game paused due to victory
+			return;
+		}
 		if (!gf.canBuild[row][col]) { // cannot build here
 			return;
 		}
@@ -99,13 +109,101 @@ public class InputEventHandler implements InputProcessor {
 
 	@Override
 	public boolean keyDown(int keycode) {
-		// TODO Auto-generated method stub
+		switch (keycode) {
+		// RED
+		case Keys.E:
+			movepadVectors[RED_SIVI][COL] = keyboardMovepadSpeed;
+			break;
+		case Keys.S:
+			movepadVectors[RED_SIVI][ROW] = -keyboardMovepadSpeed;
+			break;
+		case Keys.D:
+			movepadVectors[RED_SIVI][COL] = -keyboardMovepadSpeed;
+			break;
+		case Keys.F:
+			movepadVectors[RED_SIVI][ROW] = keyboardMovepadSpeed;
+			break;
+		case Keys.Q:
+			buildRequest(Building.BUILDING_FOUNTAIN, Sivi.RED);
+			break;
+		case Keys.A:
+			buildRequest(Building.BUILDING_SPAWNER, Sivi.RED);
+			break;
+		// GREEN
+		case Keys.UP:
+			movepadVectors[GREEN_SIVI][COL] = keyboardMovepadSpeed;
+			break;
+		case Keys.LEFT:
+			movepadVectors[GREEN_SIVI][ROW] = -keyboardMovepadSpeed;
+			break;
+		case Keys.DOWN:
+			movepadVectors[GREEN_SIVI][COL] = -keyboardMovepadSpeed;
+			break;
+		case Keys.RIGHT:
+			movepadVectors[GREEN_SIVI][ROW] = keyboardMovepadSpeed;
+			break;
+		case Keys.K:
+			buildRequest(Building.BUILDING_FOUNTAIN, Sivi.GREEN);
+			break;
+		case Keys.L:
+			buildRequest(Building.BUILDING_SPAWNER, Sivi.GREEN);
+			break;
+
+		// pause
+		case Keys.SPACE:
+			pauseRequest();
+		}
+
 		return false;
 	}
 
 	@Override
 	public boolean keyUp(int keycode) {
-		// TODO Auto-generated method stub
+		switch (keycode) {
+		// RED
+		case Keys.E:
+			if (movepadVectors[RED_SIVI][COL] > 0) {
+				movepadVectors[RED_SIVI][COL] = 0;
+			}
+			break;
+		case Keys.D:
+			if (movepadVectors[RED_SIVI][COL] < 0) {
+				movepadVectors[RED_SIVI][COL] = 0;
+			}
+			break;
+		case Keys.S:
+			if (movepadVectors[RED_SIVI][ROW] < 0) {
+				movepadVectors[RED_SIVI][ROW] = 0;
+			}
+			break;
+		case Keys.F:
+			if (movepadVectors[RED_SIVI][ROW] > 0) {
+				movepadVectors[RED_SIVI][ROW] = 0;
+			}
+			break;
+
+		// GREEN
+		case Keys.UP:
+			if (movepadVectors[GREEN_SIVI][COL] > 0) {
+				movepadVectors[GREEN_SIVI][COL] = 0;
+			}
+			break;
+		case Keys.DOWN:
+			if (movepadVectors[GREEN_SIVI][COL] < 0) {
+				movepadVectors[GREEN_SIVI][COL] = 0;
+			}
+			break;
+		case Keys.LEFT:
+			if (movepadVectors[GREEN_SIVI][ROW] < 0) {
+				movepadVectors[GREEN_SIVI][ROW] = 0;
+			}
+			break;
+		case Keys.RIGHT:
+			if (movepadVectors[GREEN_SIVI][ROW] > 0) {
+				movepadVectors[GREEN_SIVI][ROW] = 0;
+			}
+			break;
+		}
 		return false;
 	}
 
@@ -117,7 +215,7 @@ public class InputEventHandler implements InputProcessor {
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		if (debug) {
+		if (SiviWars.debug) {
 			if (screenX >= gc.menuHeight
 					&& screenX <= gc.fieldWidth + gc.menuHeight) {
 				switch (button) {
@@ -192,22 +290,27 @@ public class InputEventHandler implements InputProcessor {
 				cursors[cursorOwner][COL]);
 	}
 
+	// by cursor
+	private void buildRequest(int buildingID, Sivi player) {
+		int[] pos = getRowAndColOfCursor(player.ordinal);
+		buildBuilding(buildingID, player, pos[0], pos[1]);
+	}
+
 	public class ConstructBuildingListener extends ClickListener {
 		private final Sivi ownerS;
-		private final int ownerI;
+		// private final int ownerI;
 		private final int buildingID;
 
 		public ConstructBuildingListener(Sivi owner, int buildingID) {
 			this.buildingID = buildingID;
 			ownerS = owner;
-			ownerI = owner.ordinal;
+			// ownerI = owner.ordinal;
 		}
 
 		@Override
 		public void clicked(InputEvent event, float x, float y) {
 			super.clicked(event, x, y);
-			int[] pos = getRowAndColOfCursor(ownerI);
-			buildBuilding(buildingID, ownerS, pos[0], pos[1]);
+			buildRequest(buildingID, ownerS);
 		}
 	}
 
@@ -273,6 +376,10 @@ public class InputEventHandler implements InputProcessor {
 		}
 	}
 
+	private void pauseRequest() {
+		SiviWars.getInstance().pauseUnpause();
+	}
+
 	public class PauseListener extends ClickListener {
 		/*private final Sivi owner;
 
@@ -284,7 +391,7 @@ public class InputEventHandler implements InputProcessor {
 		public void clicked(InputEvent e, float x, float y) {
 			super.clicked(e, x, y);
 			// System.out.println(owner + " has paused the game");
-			SiviWars.getInstance().pauseUnpause();
+			pauseRequest();
 		}
 	}
 

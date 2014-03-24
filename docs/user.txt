@@ -1,0 +1,72 @@
+﻿SiviWars - uživatelská dokumentace
+
+0. Úvod
+
+SiviWars je 2D strategická hra pro 2 hráče (primárně) na Android.
+Webové stránky projektu: http://www.pslib.cz/karel.hrkal/siviwars/
+Pro náhled jak hra vypadá, se můžete podívat na přiložený screenshot.
+
+
+1. Pravidla, principy a cíl hry.
+
+Hraje se na 2D kostičkovaném terénu, pohled zvrchu, každé políčko může být jinak vysoké, čím světlejší, tím vyšší.
+Oba hráči hrají se stejným sortimentem možností a mají za úkol zničit toho druhého.
+K dispozici mají Sivi, tekutou hmotu, která se pomalu rozlévá po mapě, a umožňuje hráčům jak stavět další budovy a jednotky, tak ničit nepřítele.
+Pokud se na stejném poli setkají 2 nepřátelská Sivi, tak se navzájem vyruší.
+
+
+1.1 Budovy
+
+Ve hře jsou celkem 4 druhy budov, všechny patří jednomu z hráčů a mají počet aktuálních životů (zobrazen okolo budovy). Budova se léčí nebo je zraňována podle toho, jestli stojí na spřáteleném nebo nepřátelském Sivi.
+
+Hráči nemohou stavět budovy vedle sebe, a to ani vedle nepřátelských, a ani diagonálně.
+
+1.1.1 Nexus
+
+Každý hráč začíná s jednou touto budovou, která je jeho základna. Kdo první zničí nepřátelský nexus, okamžitě vyhrává hru. Tato budova se nedá postavit.
+
+1.1.2 Fontána
+
+Tato budoba neustále generuje Sivi na pozici, na které stojí, dokud není zničena.
+
+1.1.2 Spawner
+
+Staví jednotky, viz 1.2 jak jednotky fungují. Aby se jednotka postavila, musí za ni budova zaplatit ze svých vlastních životů.
+
+1.1.3 Konstrukce
+
+Poslední typ budovy je speciální - totiž konstrukce jiné budovy. Když se staví budova, postaví se nejprve konstrukce, a teprve až nabyde maximálního počtu životů, přemění se do postavené budovy, která začne něco dělat.
+
+
+1.2 Jednotky
+
+Ve hře existuje jediný druh jednotky, které se staví v budově Spawner. Jednotky budou automaticky postupovat k nepřátelskému nexusu a vybuchnou - změní se na Sivi - když opustí spřátelené území.
+
+
+1.3 Vítezství
+
+Pokud jeden hráč vyhraje zničením nepřátelského nexusu, hra se pozastaví a je možné začít novou hru, se stejným terém, pokud by si někdo přál odvetu.
+
+
+
+2. Ovládání (pro android):
+
+Každý hráč má k dispozici ovládací menu a kurzor na herní ploše obrazovce.
+Vpravo dole jsou 4 šipky na ovládání kurzoru, fungují analogově čím blíže prostředku držíte prst, tím pomaleji se bude kurzor hýbat.
+Uprostřed jsou 3 tlačítka: 2 na stavění budov, jedno na pozastavení hry.
+Nad tlačítkama je měřič výšky, který ukazuje, jak vysoko je terén a kolik Sivi je na pozici kurzoru.
+
+
+2.1 Ovládání pro PC
+
+Pauza: mezerník
+
+Hráč 1 (nalevo)
+Kurzor: E-S-D-F (nahoru, doleva, dolu, doprava)
+Fontána: Q
+Spawner: A
+
+Hráč 1 (vpravo)
+Kurzor: šipky
+Fontána: K
+Spawner: S

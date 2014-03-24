@@ -57,7 +57,8 @@ public class Unit implements Ownable, RoutineAction {
 	}
 
 	public void explode(int row, int col) {
-		GameField._this.addSiviSoft(row, col, siviCarried, owner);
+		// GameField._this.addSiviSoft(row, col, siviCarried, owner);
+		GameField._this.siviExplosion(row, col, siviCarried, owner);
 		destroy();
 	}
 

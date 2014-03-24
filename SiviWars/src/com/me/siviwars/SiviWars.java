@@ -30,7 +30,9 @@ public class SiviWars implements ApplicationListener {
 		return _this;
 	}
 
-	public static final float DEBUG_SPEED_COEF = 1.5f;// 5;
+	public static final float DEBUG_SPEED_COEF = 2.5f;// */15;
+
+	public static final boolean debug = /*false; // */false; // for IEH
 
 	public static final int RED_SIVI = InputEventHandler.RED_SIVI,
 			GREEN_SIVI = InputEventHandler.GREEN_SIVI,
@@ -74,6 +76,10 @@ public class SiviWars implements ApplicationListener {
 
 	private BitmapFont font;// = new BitmapFont();
 
+	private Sivi winner;
+
+	private int pointsRed, pointsGreen;
+
 	/*Gdx.files.internal("Calibri.fnt"),
 	Gdx.files.internal("Calibri.png"), false);*/
 
@@ -85,6 +91,40 @@ public class SiviWars implements ApplicationListener {
 	}
 
 	private final float maxDelta = 1f;
+
+	/**
+	 * start new game, like after one player has won
+	 */
+	public void newGame() {
+		winner = null;
+		gf.clearAll();
+		ieh.globalBuildEnabled = true;
+
+		// nexuses
+		gf.addBuilding(Building.redNexus = Building.createBuilding(
+				Building.BUILDING_NEXUS, gf, rows / 2, 4, Sivi.RED));
+		gf.addBuilding(Building.greenNexus = Building.createBuilding(
+				Building.BUILDING_NEXUS, gf, rows / 2, cols - 5, Sivi.GREEN));
+
+		// tester = new BaseUnit(Building.redNexus);
+
+		Vector2 redStart = ieh.getCenterOfField(rows / 2, 4);
+		ieh.setCursorHotspot(RED_SIVI, redStart.x, redStart.y);
+		Vector2 greenStart = ieh.getCenterOfField(rows / 2, cols - 5);
+		ieh.setCursorHotspot(GREEN_SIVI, greenStart.x, greenStart.y);
+
+		Building redFountain = Building.createBuilding(
+				Building.BUILDING_FOUNTAIN, gf, rows / 2, 1, Sivi.RED);
+		gf.addBuilding(redFountain);
+
+		Building greenFountain = Building.createBuilding(
+				Building.BUILDING_FOUNTAIN, gf, rows / 2, cols - 2, Sivi.GREEN);
+		gf.addBuilding(greenFountain);
+
+		gf.reevaluateBuildingPlaces(0, 0, rows - 1, cols - 1);
+
+		// setPaused(false); dont need this
+	}
 
 	@Override
 	public void create() {
@@ -133,28 +173,9 @@ public class SiviWars implements ApplicationListener {
 
 		// fountains
 
-		// nexuses
-		gf.addBuilding(Building.redNexus = Building.createBuilding(
-				Building.BUILDING_NEXUS, gf, rows / 2, 4, Sivi.RED));
-		gf.addBuilding(Building.greenNexus = Building.createBuilding(
-				Building.BUILDING_NEXUS, gf, rows / 2, cols - 5, Sivi.GREEN));
+		// building creation moved to newGame()
 
-		// tester = new BaseUnit(Building.redNexus);
-
-		Vector2 redStart = ieh.getCenterOfField(rows / 2, 4);
-		ieh.setCursorHotspot(RED_SIVI, redStart.x, redStart.y);
-		Vector2 greenStart = ieh.getCenterOfField(rows / 2, cols - 5);
-		ieh.setCursorHotspot(GREEN_SIVI, greenStart.x, greenStart.y);
-
-		Building redFountain = Building.createBuilding(
-				Building.BUILDING_FOUNTAIN, gf, rows / 2, 1, Sivi.RED);
-		gf.addBuilding(redFountain);
-
-		Building greenFountain = Building.createBuilding(
-				Building.BUILDING_FOUNTAIN, gf, rows / 2, cols - 2, Sivi.GREEN);
-		gf.addBuilding(greenFountain);
-
-		gf.reevaluateBuildingPlaces(0, 0, rows - 1, cols - 1);
+		newGame();
 
 		InputMultiplexer im = new InputMultiplexer();
 
@@ -190,14 +211,23 @@ public class SiviWars implements ApplicationListener {
 
 		Gdx.input.setInputProcessor(im);
 
+		// winner = null;
+
 		// System.out.println(Gdx.files.internal("fonts/arial-15.fnt"));
 		font = new BitmapFont();
 	}
 
-	public void pauseUnpause() {
-		paused = !paused;
+	public void setPaused(boolean paused) {
+		this.paused = paused;
 		redMenuPool.setPauseButton(paused);
 		greenMenuPool.setPauseButton(paused);
+		if (!paused && winner != null) {
+			newGame();
+		}
+	}
+
+	public void pauseUnpause() {
+		setPaused(!paused);
 	}
 
 	@Override
@@ -209,6 +239,10 @@ public class SiviWars implements ApplicationListener {
 	public void render() {
 		Gdx.gl.glClearColor(.6f, 1f, .6f, 1);
 		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+
+		if (winner != null && !paused) {
+			setPaused(true);
+		}
 
 		final float delta = Math.min(Gdx.graphics.getDeltaTime()
 				* DEBUG_SPEED_COEF, maxDelta);
@@ -321,7 +355,14 @@ public class SiviWars implements ApplicationListener {
 		// batch.end();
 
 		batch.setColor(Color.WHITE);
-		font.draw(batch, Gdx.graphics.getFramesPerSecond() + "", 10, 20);
+		// font.draw(batch, Gdx.graphics.getFramesPerSecond() + "", 10, 20);
+		if (winner != null) {
+			String msg = String.format(
+					"Player on %s has won the match, score: left=%d, right=%d",
+					winner == Sivi.RED ? "left" : "right", pointsRed,
+					pointsGreen);
+			font.draw(batch, msg, 200, 200);
+		}
 		batch.end();
 
 	}
@@ -420,30 +461,13 @@ public class SiviWars implements ApplicationListener {
 	}
 
 	public void setWinner(Sivi owner) {
-		// TODO: winner
+		winner = owner;
+		ieh.globalBuildEnabled = false;
+		if (winner == Sivi.RED) {
+			pointsRed++;
+		} else {
+			pointsGreen++;
+		}
 	}
 
-	/*private class DelayedSpreaderMultiplex {
-		final float minDelta = 0.05f;
-		float curDelta;
-		boolean stackingForRed;
-
-		public void addDelta(float delta) {
-			curDelta += delta;
-			if (curDelta >= minDelta) {
-				performSpread();
-			}
-		}
-
-		private void performSpread() {
-			if (stackingForRed) {
-				gf.spreaderRed.spreadSivi(curDelta);
-			} else {
-				gf.spreaderGreen.spreadSivi(curDelta);
-			}
-			stackingForRed = !stackingForRed;
-			// gf.spreadSivi(curDelta);
-			curDelta = 0;
-		}
-	}//*/
 }

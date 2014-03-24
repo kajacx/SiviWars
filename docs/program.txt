@@ -1,0 +1,24 @@
+﻿SiviWars - programátorská dokumentace
+
+Úvod
+
+SiviWars je hra běžící na LibGDX enginu ( http://libgdx.badlogicgames.com/ ) naprogramovaná v Javě.
+
+Nejdůležitější třídy jsou v balíčku com.me.siviwars, kde je například hlavní třída SiviWars, která se stará hlavně o vykreslování a spolu s třídou GameField, která implementuje většinu herní logiky (např rozšiřování sivi), tvoří jádro celé hry.
+
+Zaměřme se tedy na přídu GameField, a na dva její algoritmy
+
+1) Generace terénu.
+Výška terénu se generuje podobným algoritmem, jaký byl použit k generaci textur, který můžete najít v adresáři extra.
+Nejprve se vyberou pivotní řádky a ploupce, přičemž první i poslední řádek i sloupec musí být pivotní. Dále mezeri mezi pivotními řádky i sloupci jsou aspoň 5, ale zároveň nejmenší možné (>=5).
+Pivotním pozicím (kde je pivotní jak řádek, tak sloupec) se potom nastavý výška terénu naprosto náhodně (uniformě z rozumného rosahu) a řádky a sloupce mezi nimi se lineárně proloží.
+Asi nejzajímavější část je, jak proložit obdélník, pokud známe prvky na jeho obvodu. Každý bod jsem aproximoval jako vážený průměr jeho 4 průmětů na 4 strany obdelníku, kde jako váha je 1/(vzdálenost od strany).
+To má za následek uvěřitelné proložení terénu.
+
+2) Rozšiřování Sivi.
+Tak to neni žádný algoritmický zázrak, každá 2 sousední políčka se vyhodnotí zvlášť, jendiný háček je jak se Sivi přelévá přes hranu v terénu a omezit rozlívání, aby se během první sekundy nerozlilo 0.01 Sivi na celou mapu.
+
+
+Další Důležitá třída je InputEventHandler, který jak napovídá název, zpracovává vstup všecho druhu, a tady se převádí vstup jak z androidu tak z PC do stejných příkazů.
+
+Pak už jsou jen budovy, tam je akorát pěkně využitá dědičnost, jinak je to docela straight-forward implementace toho, co to má dělat, nějaký pooly na zapavatovávání si barev a textur a jediná třída pro jednotky.

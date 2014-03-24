@@ -28,6 +28,19 @@ public class GameField {
 
 	SiviSpreader spreaderRed, spreaderGreen;
 
+	public void clearAll() {
+		// units
+		unitHead.next = unitHead.previous = unitHead;
+
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				canBuild[i][j] = true;
+				buildings[i][j] = null;
+				siviRed[i][j] = siviGreen[i][j] = 0;
+			}
+		}
+	}
+
 	/**
 	 * checks bounds
 	 * 
@@ -43,6 +56,37 @@ public class GameField {
 
 	private void genRandTerrain() {
 		new FloatTerrainGenerator().generate();
+	}
+
+	/**
+	 * makes explosion in field and surrounding area. GameField overflow ignored
+	 * 
+	 * @param row
+	 * @param col
+	 * @param howMuch
+	 *            total sivi to be delivered
+	 * @param owner
+	 */
+	public void siviExplosion(int row, int col, float howMuch, Sivi owner) {
+		float center = howMuch * .25f; // one fourth
+		float adj = center * .5f; // one eighth
+		float diag = adj * .5f; // one sixteenth
+		addSiviSoft(row, col, center, owner);
+		addSiviSoftRangeChecked(row + 1, col, adj, owner);
+		addSiviSoftRangeChecked(row, col + 1, adj, owner);
+		addSiviSoftRangeChecked(row - 1, col, adj, owner);
+		addSiviSoftRangeChecked(row, col - 1, adj, owner);
+		addSiviSoftRangeChecked(row + 1, col + 1, diag, owner);
+		addSiviSoftRangeChecked(row + 1, col - 1, diag, owner);
+		addSiviSoftRangeChecked(row - 1, col + 1, diag, owner);
+		addSiviSoftRangeChecked(row - 1, col - 1, diag, owner);
+	}
+
+	public void addSiviSoftRangeChecked(int row, int col, float howMuch,
+			Sivi owner) {
+		if (boundCheck(row, col)) {
+			addSiviSoft(row, col, howMuch, owner);
+		}
 	}
 
 	public void addSiviSoft(int row, int col, float howMuch, Sivi owner) {

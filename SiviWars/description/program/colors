@@ -1,5 +1,0 @@
-COLOR POOL
-
-holds all possible colors to be drawn as filter on base texture
-
-when drawing, float values are ROUND UP to key drawables values
